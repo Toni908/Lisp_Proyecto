@@ -1,0 +1,173 @@
+
+El módulo `Optimizador.java` realiza **7 optimizaciones** sobre el código intermedio mediante múltiples pasadas iterativas. El optimizador continúa ejecutándose mientras haya cambios (punto fijo):
+
+```java
+boolean cambio = true;
+while (cambio) {
+    cambio = false;
+    cambio |= calcularConstantes(codigo);
+    cambio |= fusionarLecturaAsignacion(codigo);
+    cambio |= asignacionDiferida(codigo);
+    cambio |= simplificacionAlgebraica(codigo);
+    cambio |= ramificacionesAdyacentes(codigo);
+    cambio |= eliminarEtiquetasMuertas(codigo);
+    cambio |= eliminarCodigoMuerto(codigo);
+}
+```
+
+**1. Cálculo de Constantes:** Evalúa operaciones binarias con operandos constantes en compilación.
+```
+Antes:  t1 = 10 + 5
+Después: t1 = 15
+```
+
+**2. Fusión de Lectura de Array:** Elimina temporales al leer arrays.
+```
+Antes:  t_temp = IND_VAL matriz[offset]
+        resultado = t_temp
+Después: IND_VAL matriz[offset] → resultado
+```
+
+**3. Asignación Diferida:** Reemplaza temporales con uso único por sus valores.
+```
+Antes:  t1 = a + b
+        resultado = t1
+Después: resultado = a + b
+```
+
+**4. Simplificación Algebraica:** Elimina operaciones neutras.
+```
+x = y + 0  →  x = y
+x = y * 1  →  x = y
+x = y * 0  →  x = 0
+```
+
+**5. Ramificaciones Adyacentes:** Elimina saltos a etiqueta siguiente.
+```
+Antes:  código...
+        GOTO L_2
+        L_2: más código
+Después: código...
+        (GOTO eliminado)
+```
+
+**6. Etiquetas Muertas:** Elimina labels no usados en saltos.
+```
+Antes:  L_unused: código
+Después: (L_unused eliminada si no hay GOTO a ella)
+```
+
+**7. Código Muerto:** Elimina asignaciones a variables no usadas después.
+```
+Antes:  x = 5
+        y = 10
+        resultado = y
+Después: y = 10
+        resultado = y
+```
+
+#### 4.4.2. Manejo de Arrays: HEAP y Asignación Dinámica
+
+Los arrays se almacenan dinámicamente en el HEAP (memoria dinámica), usando un puntero global `HEAP_PTR` que apunta a la siguiente posición libre.
+
+**Instrucción ALLOC: Reserva de memoria**
+
+```
+Código intermedio:
+  ALLOC tamaño → variable_array
+
+Código 68K:
+  MOVE.L HEAP_PTR, D0         ; D0 = dirección libre actual
+  MOVE.L D0, variable_array   ; Guardar dirección base
+  ADD.L #tamaño, D0           ; Calcular siguiente pos. libre
+  MOVE.L D0, HEAP_PTR         ; Actualizar puntero global
+```
+
+**Ejemplo: Matriz 3×3 de números**
+
+```
+Código natural:
+  lista de numero matriz de longitud 3, 3.
+
+Código 68K:
+  MOVE.L HEAP_PTR, D0     ; D0 = dirección actual del heap
+  MOVE.L D0, matriz       ; matriz apunta a D0
+  ADD.L #36, D0           ; 3*3*4=36 bytes (números son 4 bytes)
+  MOVE.L D0, HEAP_PTR     ; Actualizar heap
+```
+
+**Instrucción IND_ASS: Asignación a elemento de array**
+
+Para asignar `matriz[1,2] = 999` con offset 20:
+
+```
+Código intermedio:
+  IND_ASS 999, 20 → matriz
+
+Código 68K:
+  MOVEA.L matriz, A0      ; A0 = dirección base de matriz
+  MOVE.L #20, D0          ; D0 = offset en bytes
+  MOVE.L #999, D1         ; D1 = valor a asignar
+  MOVE.L D1, 0(A0, D0.L)  ; MEM[A0+20] = 999
+```
+
+**Instrucción IND_VAL: Lectura de elemento de array**
+
+Para leer `x = matriz[1,2]` con offset 20:
+
+```
+Código intermedio:
+  IND_VAL matriz, 20 → x
+
+Código 68K:
+  MOVEA.L matriz, A0      ; A0 = dirección base
+  MOVE.L #20, D0          ; D0 = offset en bytes
+  MOVE.L 0(A0, D0.L), D1  ; D1 = MEM[A0+20]
+  MOVE.L D1, x            ; x = D1
+```
+
+**Cálculo de offset para arrays multidimensionales**
+
+Para matriz[i,j] en array [M,N]:
+```
+offset_lineal = i*N + j
+offset_bytes = offset_lineal * 4
+```
+
+Ejemplo: matriz[1,2] en [3,3] de números (4 bytes):
+```
+offset_lineal = 1*3 + 2 = 5
+offset_bytes = 5 * 4 = 20 bytes
+```
+
+#### 4.4.3. ESTRUCTURA DE LA SALIDA
+
+El fichero Generador68K.java traduce el código intermedio a código ensamblador Easy68K.
+
+**Cabecera e inicialización HEAP**
+
+```asm
+ORG $1000
+START:
+  LEA STACKPTR, A7         ; Inicializar pila
+  MOVE.L #$2000, HEAP_PTR  ; Inicializar heap en $2000
+  JMP main
+```
+
+**Sección de datos**
+
+```asm
+; Variables globales
+var_global1:   DS.W 1      ; Variable 16-bit
+arr_global1:   DS.L 1      ; Puntero a array (dirección base)
+
+; Literales de string
+str0:          DC.B 'Hola',0
+
+; Puntero global del heap
+HEAP_PTR:      DS.L 1      ; Dirección siguiente libre en heap
+```
+
+**Sección de código**
+
+Contiene funciones y el main que usa ALLOC, IND_ASS e IND_VAL para arrays.
