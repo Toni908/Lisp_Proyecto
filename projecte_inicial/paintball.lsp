@@ -15,7 +15,7 @@
 (load 'agent-abc123)
 (load 'agent-xyz999)
 
-(setq nombre-mapa "maps/basic1.map")
+(setq nombre-mapa "maps/basic2.map")
 
 
 ;; Documentació d'això...
