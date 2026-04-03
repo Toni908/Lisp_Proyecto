@@ -7,84 +7,135 @@
 ;; <Descripció de les funcions d'aquest fitxer>
 
 ;; Documentació d'això...
-(defun pinta ()
-    "Pinta l'estat de la partida en un torn segons l'estat passat per paràmetre."
-    42)
-
-(defun simbolo-celda (celda)
-  (cond
-    ((equal (car celda) 'aigua) "~")
-    ((member 'lab celda) "L")
-    ((member 'base celda) "X")
-    ((equal (cadr celda) 'r) "R")
-    ((equal (cadr celda) 'g) "G")
-    ((equal (cadr celda) 'b) "B")
-    (t "?")))
-
-;; Funcion para empezar la imprimicion del mapa
-(defun imprimir-mapa (mapa)
-  (cls)
-  (move 30 40)
-  (imprimir-files mapa 0 10) ;; tiene que ser par la mida
-  (color 0 0 0) ; negro
+(defun pinta (mapa)
+    (cls)
+    (move 30 40)
+    (imprimir-files mapa 0 12) ;; tiene que ser par la mida
+    (color 0 0 0) ; negro
 )
 
 ;; Imprime Fila por fila
 (defun imprimir-files (mapa fila mida)
-  (cond
-    ((null mapa) nil)
-    (t
-     (move 30 (- 320 (* fila mida)))
-     (imprimir-fila (car mapa) 0 mida)
-     (imprimir-files (cdr mapa) (+ fila 1) mida)
+    (cond
+        ((null mapa) nil)
+        (t
+            (move 30 (- 320 (* fila mida)))
+            (imprimir-fila (car mapa) 0 mida)
+            (imprimir-files (cdr mapa) (+ fila 1) mida)
+        )
     )
-  )
 )
 
 ;; Imprime elemento, se utiliza con files
-(defun imprimir-fila (fila columna mida)    
-  (cond
-    ((null fila) nil)
-    (t
-     (moverel mida 0)
-     (pinta-terreno fila mida)
-     (pinta-unidad fila mida)
-     (quadrat mida)
-     (imprimir-fila (cdr fila) (+ columna 1) mida)
+(defun imprimir-fila (fila columna mida)
+    (cond
+        ((null fila) nil)
+        (t
+            (moverel mida 0)
+            (pinta-terreno (car fila) mida)
+            (pinta-unidad (car fila) mida) ; para formas diferentes no cuadradas
+            (pinta-marca (car fila) mida) ; pinta las marcas de las unidades
+            (quadrat mida) ; marco cuadrado
+            (imprimir-fila (cdr fila) (+ columna 1) mida)
+        )
     )
-  )
+)
+
+(defun pinta-marca (casella mida)
+    (moverel (/ mida 2) (/ mida 2))
+    (let* ((marcas (cadddr (cdr (cdr casella )))))
+          (cond ((contiene marcas 'b) 
+                    (color 80 120 210)
+                    (linea)
+                )
+                (t t))
+          (cond ((contiene marcas 'r)
+                    (color 210 80 80)
+                    (moverel 0 2)
+                    (linea)
+                    (moverel 0 -2)
+                )
+                (t t))
+          (cond ((contiene marcas 'g)
+                    (color 80 185 80)
+                    (moverel 0 -2)
+                    (linea)
+                    (moverel 0 2)
+                )
+                (t t))
+    )
+    (moverel (- (/ mida 2)) (- (/ mida 2)))
+)
+
+(defun linea ()
+    (drawrel -2 0)
+    (drawrel 4 0)
+    (moverel -2 0)
+)
+
+(defun contiene (l e)
+    (cond ((null l) nil)
+          ((equal (car l) e) t)
+          (t (contiene (cdr l) e))
+    )
 )
 
 ;; pinta las unidades
-(defun pinta-unidad (fila mida)
-  (cond ((equal (caddr (car fila)) 'lab) (triangle mida))
-        ((equal (caddr (car fila)) 'base) ())
+(defun pinta-unidad (casella mida)
+    (cond
+        ((equal (caddr casella) 'lab) (triangle mida))
+        ((equal (caddr casella) 'unidad) (cercle casella mida))
         (t )
-  )
+    )
 )
 
 ;; rellena el quadrado de lineas
-(defun pinta-terreno (fila mida &optional (counter mida))
-  (cond
-    ((= counter 0)
-     (moverel 0 (- mida)))   ;; restauras posición al final
-    (t
-      (color-casella (car fila))
-      (drawrel mida 0)
-      (moverel (- mida) 1)
-      (pinta-terreno fila mida (- counter 1))
+(defun pinta-terreno (casella mida &optional (counter mida))
+    (cond
+        ((= counter 0)
+            (moverel 0 (- mida)))   ;; restaura posición al final
+        (t
+            (color-casella casella)
+            (drawrel mida 0)
+            (moverel (- mida) 1)
+            (pinta-terreno casella mida (- counter 1))
+        )
     )
-  )
 )
 
-; tierra o agua
+; definir el color de las casillas base, agua, color, o equipo
 (defun color-casella (casella)
-  (cond
-    ((equal (car casella) 'aigua) (color 42 255 255))
-    ((equal (cadr casella) 'b) (color 80 120 210))
-    ((equal (cadr casella) 'r) (color 210 80 80))
-    ((equal (cadr casella) 'g) (color 80 185 80))
-    (t (color 211 211 211))))
+    (cond
+        ((equal (caddr casella) 'base) ; prioridad a las bases
+            (cond
+                ((equal (cadddr casella) 'e1) (color 255 0 255)) ; o 128 0 128 para morado mas profundo
+                (t (color 255 255 0))
+            )
+        )
+        ((equal (caddr casella) 'lab) ; el triangulo se lo haremos en estructura
+            (cond
+                ((equal (cadddr casella) 'e1) (color 255 0 255)) ; o 128 0 128 para morado mas profundo
+                ((equal (cadddr casella) 'e2) (color 255 255 0)) ; o 128 0 128 para morado mas profundo
+                (t (color 0 0 0))
+            )
+        )
+        ((equal (car casella) 'aigua) (color 42 255 255))
+        ((equal (cadr casella) 'b) (color 80 120 210))
+        ((equal (cadr casella) 'r) (color 210 80 80))
+        ((equal (cadr casella) 'g) (color 80 185 80))
+        (t (color 211 211 211))
+    )
+)
+
+; el color de las unidades, solo lo usaran los soldados
+(defun color-unidad (casella)
+    (cond
+        ((equal (cadddr (cdr casella)) 'b) (color 80 120 210))
+        ((equal (cadddr (cdr casella)) 'r) (color 210 80 80))
+        ((equal (cadddr (cdr casella)) 'g) (color 80 185 80))
+        (t t)
+    )
+)
 
 ;; Hace un quadrado, se utiliza solo para los bordes
 (defun quadrat (mida)
@@ -92,40 +143,62 @@
     (drawrel 0 mida)
     (drawrel mida 0)
     (drawrel 0 (- mida))
-    (drawrel (- mida) 0))
-
-;; Hace un Circulo
-(defun cercle (x y radi segments)
- (mover (+ x radi) y)
- (cercle2 x y radi (/ 360 segments) 0)
+    (drawrel (- mida) 0)
 )
 
-;; Ayuda de circulos
-(defun cercle2 (x y radi pas angle)
-  (cond ((< angle 360) 
-         (drawr (+ x (* radi (cos (radians (+ angle pas)))))
-                (+ y (* radi (sin (radians (+ angle pas))))))
-         (cercle2 x y radi pas (+ angle pas)))
-        (t t)))
+; pone el puntero en el centro, llama a cercle y luego deja el puntero en su sitio
+(defun cercle (casella mida)
+    (color-unidad casella)
+    (moverel (/ mida 2) 0)
+    (cercle-fill mida)
 
-;; Ayuda de circulo
-(defun mover (x y)
- (move (round x)
-       (round y)))
+    (color 0 0 0)
+    (drawrel (/ mida 2) (/ mida 2))
+    (drawrel (- (/ mida 2)) (/ mida 2))
+    (drawrel (- (/ mida 2)) (- (/ mida 2)))
+    (drawrel (/ mida 2) (- (/ mida 2)))
 
-;; Ayuda de circulo
-(defun drawr (x y)
- (draw (round x)
-       (round y)))
+    (moverel (- (/ mida 2)) 0) ; restaurar posición
+)
 
-;; ayuda de circulo
-(defun radians (graus)
- (/ (* graus (* 2 pi)) 360))
+; rellena el rombo
+(defun cercle-fill (mida &optional (counter mida))
+    (cond
+        ((= counter 0) 
+            (moverel (/ mida 2) (- (/ mida 2)))
+        )
+        (t
+            (drawrel (/ mida 2) (/ mida 2))
+            (moverel (- (/ mida 2)) (- (/ mida 2)))
+            (cond
+                ((= (mod counter 2) 0) (moverel 0 1)) 
+                (t (moverel (- 1) 0))
+            )
+            
+            (cercle-fill mida (- counter 1))
+        )
+    )
+)
 
-;; triangulo
+
+;; triangulo laboratorio
 (defun triangle (mida)
-  (color 255 255 255)
-  (drawrel mida 0)             ; base hacia la derecha
-  (drawrel (- (/ mida 2)) mida) ; subida a la punta
-  (drawrel (- (/ mida 2)) (- mida)) ; vuelta al inicio
+    (color 255 255 255)
+    (triangle-fill mida 0)
+    ;; restaurar posición como haces en pinta-terreno
+    (moverel 0 (- mida))
+)
+
+; rellena triangulo
+(defun triangle-fill (mida y)
+    (cond
+        ((= y mida) nil)
+        (t
+            ;; dibuja línea horizontal del triángulo
+            (drawrel (- mida y) 0)
+            ;; volver al inicio de la línea
+            (moverel (- (- mida y)) 1)
+            (triangle-fill mida (+ y 1))
+        )
+    )
 )

@@ -23,7 +23,7 @@
     "Punt d'entrada del programa."
 
     (let* ((mapa (llegeix-exp nombre-mapa)))
-        (imprimir-mapa mapa)
+        (pinta mapa)
     )
     
 
@@ -41,4 +41,5 @@
     (let* ((fp (open nom-fitxer))
     (e (read fp nil nil)))
     (close fp)
-    e))
+    e)
+)
