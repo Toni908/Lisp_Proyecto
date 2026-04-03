@@ -9,9 +9,29 @@
 ;; Documentació d'això...
 (defun pinta (mapa)
     (cls)
+    (color 0 0 0)
+    ; Cabecera con info
+    (move 30 20)
+    (princ "Ronda: 100")
+    ;(princ turno)
+    
+    (move 30 80)
+    (princ "Equip: E1")
+    ;(princ equip-actual)
+    
+    ; Leyenda equipos
+    (move 30 370)
+    (color 255 0 255)
+    (princ "E1")
+    
+    (move 70 370)
+    (color 255 255 0)
+    (princ "E2")
+    
+    ; Mapa
     (move 30 40)
-    (imprimir-files mapa 0 12) ;; tiene que ser par la mida
-    (color 0 0 0) ; negro
+    (imprimir-files mapa 0 10)
+    (color 0 0 0)
 )
 
 ;; Imprime Fila por fila
@@ -69,8 +89,8 @@
 
 (defun linea ()
     (drawrel -2 0)
-    (drawrel 4 0)
-    (moverel -2 0)
+    (drawrel 5 0)
+    (moverel -3 0)
 )
 
 (defun contiene (l e)
