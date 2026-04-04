@@ -18,23 +18,24 @@
 (setq nombre-mapa "maps/basic2.map")
 
 
-;; Documentació d'això...
+;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
+;; pintura e2, y el mapa
 (defun inici ()
-    "Punt d'entrada del programa."
+    (monitor (cons '(1 200 200) (llegeix-exp nombre-mapa))) 
+)
 
-    (let* ((mapa (llegeix-exp nombre-mapa)))
-        (pinta mapa)
+(defun monitor (mapa)
+    (pinta mapa)
+
+    (let* ((tecla (get-key)))
+        (cond ((= tecla 333) 
+                (monitor (cons (cons (+ 1 (car (car mapa))) (cdr (car mapa))) (cdr mapa)))
+              )
+              (t (monitor mapa))
+        )
     )
-    
 
-
-    
-
-    ;(color 0 0 0 255 255 255) ; Compatibilitat Windows-Unix: fons blanc, línies i text negres.
-    ;(mode 0 0 640 375)        ; Compatibilitat Windows-Unix: configura la finestra de joc per a Unix segons la de Windows.
-    ;(move 300 167)            ; Pintam un quadrat enmig de la finestra.
-    ;(quadrat 1000)
-    t)
+)
 
 
 (defun llegeix-exp (nom-fitxer)

@@ -11,27 +11,30 @@
     (cls)
     (color 0 0 0)
     ; Cabecera con info
-    (move 30 20)
-    (princ "Ronda: 100")
-    ;(princ turno)
+    (princ "Ronda: ")
+    (princ (car (car mapa)))
     
     (move 30 80)
-    (princ "Equip: E1")
-    ;(princ equip-actual)
+    (princ "    Turn de Equip: ")
+    (print (equip-actual mapa))
     
     ; Leyenda equipos
-    (move 30 370)
-    (color 255 0 255)
-    (princ "E1")
+    (princ "Pintura E1: ")
+    (print (cadr (car mapa)))
     
-    (move 70 370)
-    (color 255 255 0)
-    (princ "E2")
+    (princ "Pintura E2: ")
+    (print (caddr (car mapa)))
     
     ; Mapa
-    (move 30 40)
-    (imprimir-files mapa 0 10)
+    (imprimir-files (cdr mapa) 0 10)
     (color 0 0 0)
+)
+
+(defun equip-actual (mapa)
+  (cond 
+    ((= (mod (car (car mapa)) 2) 0) 'e2)
+    (t 'e1)
+  )
 )
 
 ;; Imprime Fila por fila
@@ -39,7 +42,7 @@
     (cond
         ((null mapa) nil)
         (t
-            (move 30 (- 320 (* fila mida)))
+            (move 30 (- 315 (* fila mida)))
             (imprimir-fila (car mapa) 0 mida)
             (imprimir-files (cdr mapa) (+ fila 1) mida)
         )
