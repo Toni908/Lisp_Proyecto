@@ -62,7 +62,7 @@
     (cond ( (pertany 'base casella)
             (marcar (cadddr (cdr casella))) ; posicion 5 las marcas de base
           )
-          ( (pertany 'unidad casella)
+          ( (pertany 'bolla casella)
             (marcar (cadddr (cdr (cdr casella)))) ; posicion 6 las marcas de unidad
           )
           (t nil)
@@ -109,7 +109,7 @@
 (defun pinta-unidad (casella mida)
     (cond
         ((equal (caddr casella) 'lab) (triangle mida))
-        ((equal (caddr casella) 'unidad) (cercle casella mida))
+        ((equal (caddr casella) 'bolla) (cercle casella mida))
         (t )
     )
 )

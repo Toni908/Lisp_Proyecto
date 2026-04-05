@@ -24,7 +24,8 @@
 (defun inici ()
     (dribble "debug.txt")
     ;(monitor (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
-    (print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
+    ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
+    (print (trobar-unitats (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
     (dribble)
 )
 
@@ -56,7 +57,7 @@
 ;   c     - índex de columna
 (defun iniciar-mapa-celda (celda f c)
     (cond ((pertany 'base celda)
-           (append celda (list '() (list f c) (id-base celda))))
+           (append celda (list '() (id-base celda) (list f c))))
           ((pertany 'lab celda)
            (append celda (list 'nil (list f c))))
           (t
@@ -131,3 +132,71 @@
     (cond ((null l) nil)
           ((equal x (car l)) t)
           (t (pertany x (cdr l)))))
+
+; get-equip-celda: retorna l'equip de la celda
+(defun get-equip-celda (celda)
+    (cadddr celda))
+
+; es-unitat: comprova si una celda té una unitat (base o bolla)
+(defun es-unitat (celda)
+    (cond ((pertany 'base celda) t)
+          ((pertany 'bolla celda) t)
+          (t nil)))
+
+; celda-a-unitat: construeix la llista d'info d'una unitat a partir de la celda i l'estat
+(defun celda-a-unitat (celda mapa)
+    (let* ((tipus (celda-tipus celda))
+           (equip (celda-equip celda))
+           (pintura (cond ((equal equip 'e1) (cadr (car mapa)))
+                          (t (caddr (car mapa)))))
+           (base (equal tipus 'base)))
+        (list
+            (car (car mapa))
+            equip
+            pintura
+            (cond (base (celda-id-base celda))
+                  (t (celda-id-bolla celda)))
+            tipus
+            (cond (base (celda-coord-base celda))
+                  (t (celda-coord-bolla celda)))
+            (cond (base (celda-colors-pintat-base celda))
+                  (t (celda-colors-pintat-bolla celda)))
+            (cond (base nil)
+                  (t (celda-color-propi-bolla celda)))
+            (cond (base nil)
+                  (t (celda-tr-pintar-bolla celda)))
+            (cond (base nil)
+                  (t (celda-tr-moure-bolla celda)))
+            nil)))                               ; visio
+
+(defun celda-tipus (celda) (caddr celda))
+(defun celda-equip (celda) (cadddr celda))
+(defun celda-colors-pintat-base (celda) (car (cddr (cddr celda))))
+(defun celda-id-base (celda) (cadr (cddr (cddr celda))))
+(defun celda-coord-base (celda) (caddr (cddr (cddr celda))))
+(defun celda-color-propi-bolla (celda) (car (cddr (cddr celda))))
+(defun celda-colors-pintat-bolla (celda) (cadr (cddr (cddr celda))))
+(defun celda-id-bolla (celda) (caddr (cddr (cddr celda))))
+(defun celda-tr-pintar-bolla (celda) (cadddr (cddr (cddr celda))))
+(defun celda-tr-moure-bolla (celda) (car (cddddr (cddr (cddr celda)))))
+(defun celda-coord-bolla (celda) (cadr (cddddr (cddr (cddr celda)))))
+
+; trobar-unitats-llista: filtra les celdas que son unitats
+(defun trobar-unitats-llista (celdas mapa equip)
+    (cond ((null celdas) nil)
+          ((and (es-unitat (car celdas))
+                (equal (get-equip-celda (car celdas)) equip))
+           (cons (celda-a-unitat (car celdas) mapa)
+                 (trobar-unitats-llista (cdr celdas) mapa equip)))
+          (t (trobar-unitats-llista (cdr celdas) mapa equip))))
+
+; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
+(defun trobar-unitats (mapa)
+    (let* ((celdas (celdas-mapa (cdr mapa))))
+        (list
+            (trobar-unitats-llista celdas mapa 'e1)
+            (trobar-unitats-llista celdas mapa 'e2))))
+
+(defun celdas-mapa (mapa)
+    (cond ((null mapa) nil)
+          (t (append (car mapa) (celdas-mapa (cdr mapa))))))
