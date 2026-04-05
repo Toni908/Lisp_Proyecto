@@ -22,10 +22,10 @@
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
 ;; pintura e2, y el mapa
 (defun inici ()
-    ;(dribble "debug.txt")
-    (monitor (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
-    ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
-    ;(dribble)
+    (dribble "debug.txt")
+    ;(monitor (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
+    (print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
+    (dribble)
 )
 
 ; iniciar-mapa: recorre les files del mapa afegint meta-informació
@@ -57,6 +57,8 @@
 (defun iniciar-mapa-celda (celda f c)
     (cond ((pertany 'base celda)
            (append celda (list '() (list f c) (id-base celda))))
+          ((pertany 'lab celda)
+           (append celda (list 'nil (list f c))))
           (t
            (append celda (list (list f c))))))
 
