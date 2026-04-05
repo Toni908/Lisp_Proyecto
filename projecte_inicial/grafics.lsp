@@ -30,19 +30,12 @@
     (color 0 0 0)
 )
 
-(defun equip-actual (mapa)
-  (cond 
-    ((= (mod (car (car mapa)) 2) 0) 'e2)
-    (t 'e1)
-  )
-)
-
 ;; Imprime Fila por fila
 (defun imprimir-files (mapa fila mida)
     (cond
         ((null mapa) nil)
         (t
-            (move 30 (- 315 (* fila mida)))
+            (move 30 (+ 30 (* fila mida)))
             (imprimir-fila (car mapa) 0 mida)
             (imprimir-files (cdr mapa) (+ fila 1) mida)
         )

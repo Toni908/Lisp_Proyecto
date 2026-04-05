@@ -16,6 +16,7 @@
 (load 'agent-xyz999)
 
 (setq nombre-mapa "maps/basic2.map")
+(setq MAX-TORNS 1500)
 
 
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
@@ -26,17 +27,54 @@
 
 (defun monitor (mapa)
     (pinta mapa)
-
-    (let* ((tecla (get-key)))
-        (cond ((= tecla 333) 
-                (monitor (cons (cons (+ 1 (car (car mapa))) (cdr (car mapa))) (cdr mapa)))
-              )
-              (t (monitor mapa))
+    (cond
+        ; Condición de fin de partida
+        ;((fi-partida mapa) (mostra-guanyador mapa))
+        (t
+            ; Esperar tecla
+            (let* ((tecla (get-key)))
+                (cond
+                    ((= tecla 333) (monitor (fer-torn mapa)))  ; flecha derecha → avanzar turno
+                    ((= tecla 336) (cls))                           ; flecha abajo, salir
+                    (t (monitor mapa))                          ; cualquier otra → no avanzar
+                )
+            )
         )
     )
-
 )
 
+(defun fer-torn (mapa)
+    (let* ((equip (equip-actual mapa)) ;; equip actual
+           ; (unitats (trobar-unitats mapa equip))
+           ; Para cada unidad, llamar al agente y aplicar las acciones
+           ; (nou-mapa (aplicar-accions mapa equip unitats))
+          )
+        ; Incrementar el turno
+        (cons (cons (+ 1 (car (car mapa))) (cdr (car mapa))) (cdr mapa))
+    )
+)
+
+(defun fi-partida (mapa)
+    (cond 
+        ((base-destruida) t)
+        ((>= (torn mapa) MAX-TORNS) t)
+    )
+)
+
+(defun equip-actual (mapa)
+  (cond 
+    ((= (mod (torn mapa) 2) 0) 'e2)
+    (t 'e1)
+  )
+)
+
+(defun mostra-guanyador (mapa)
+    (t)
+)
+
+(defun torn (mapa) 
+    (car (car mapa))    
+)
 
 (defun llegeix-exp (nom-fitxer)
     (let* ((fp (open nom-fitxer))
