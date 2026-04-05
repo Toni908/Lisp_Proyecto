@@ -145,29 +145,29 @@
 
 ; celda-a-unitat: construeix la llista d'info d'una unitat a partir de la celda i l'estat
 (defun celda-a-unitat (celda mapa)
-    (let* ((tipus (celda-tipus celda))
-           (equip (celda-equip celda))
-           (pintura (cond ((equal equip 'e1) (cadr (car mapa)))
-                          (t (caddr (car mapa)))))
-           (base (equal tipus 'base)))
+    (let* ((tipus (celda-tipus celda))                              ; agafa el tipus: 'base o 'bolla
+           (equip (celda-equip celda))                              ; agafa l'equip: 'e1 o 'e2
+           (pintura (cond ((equal equip 'e1) (cadr (car mapa)))     ; pintura e1 del estat
+                          (t (caddr (car mapa)))))                  ; pintura e2 del estat
+           (base (equal tipus 'base)))                              ; boolea: es base o no?
         (list
-            (car (car mapa))
-            equip
-            pintura
-            (cond (base (celda-id-base celda))
-                  (t (celda-id-bolla celda)))
-            tipus
-            (cond (base (celda-coord-base celda))
-                  (t (celda-coord-bolla celda)))
-            (cond (base (celda-colors-pintat-base celda))
-                  (t (celda-colors-pintat-bolla celda)))
-            (cond (base nil)
-                  (t (celda-color-propi-bolla celda)))
-            (cond (base nil)
-                  (t (celda-tr-pintar-bolla celda)))
-            (cond (base nil)
-                  (t (celda-tr-moure-bolla celda)))
-            nil)))                               ; visio
+            (car (car mapa))                                        ; 1. ronda - del estat
+            equip                                                   ; 2. equip
+            pintura                                                 ; 3. pintura - del estat segons equip
+            (cond (base (celda-id-base celda))                      ; 4. id - pos 6 si base
+                  (t (celda-id-bolla celda)))                       ;       pos 7 si bolla
+            tipus                                                   ; 5. tipus-unitat
+            (cond (base (celda-coord-base celda))                   ; 6. coordenada - pos 7 si base
+                  (t (celda-coord-bolla celda)))                    ;                pos 10 si bolla
+            (cond (base (celda-colors-pintat-base celda))           ; 7. colors-pintat - pos 5 si base
+                  (t (celda-colors-pintat-bolla celda)))            ;                   pos 6 si bolla
+            (cond (base nil)                                        ; 8. color-propi - nil si base
+                  (t (celda-color-propi-bolla celda)));               pos 5 si bolla
+            (cond (base nil)                                        ; 9. tr-pintar - nil si base
+                  (t (celda-tr-pintar-bolla celda)))                ;              pos 8 si bolla
+            (cond (base nil)                                        ; 10. tr-moure - nil si base
+                  (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
+            nil)))                                                  ; 11. visio - nil de moment
 
 (defun celda-tipus (celda) (caddr celda))
 (defun celda-equip (celda) (cadddr celda))
