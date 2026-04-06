@@ -1,6 +1,6 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
-;; Estudiants: ABC, XYZ.
+;; Estudiants: Antonio Garcia Font
 ;; Professor: XXX.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
@@ -23,9 +23,9 @@
 ;; pintura e2, y el mapa
 (defun inici ()
     (dribble "debug.txt")
-    ;(monitor (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
+    ;(monitor (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
     ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
-    (print (trobar-unitats (cons '(1 200 200) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
+    (print (trobar-unitats (cons (list 1 200 200 500 500) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
     (dribble)
 )
 
@@ -115,10 +115,6 @@
     (t)
 )
 
-(defun torn (mapa) 
-    (car (car mapa))    
-)
-
 ;; funcion de clase
 (defun llegeix-exp (nom-fitxer)
     (let* ((fp (open nom-fitxer))
@@ -157,8 +153,8 @@
             (cond (base (celda-id-base celda))                      ; 4. id - pos 6 si base
                   (t (celda-id-bolla celda)))                       ;       pos 7 si bolla
             tipus                                                   ; 5. tipus-unitat
-            (cond (base (celda-coord-base celda))                   ; 6. coordenada - pos 7 si base
-                  (t (celda-coord-bolla celda)))                    ;                pos 10 si bolla
+            (cond (base (coord-amb-desplacament (celda-coord-base celda) mapa))
+                  (t (coord-amb-desplacament (celda-coord-bolla celda) mapa)))
             (cond (base (celda-colors-pintat-base celda))           ; 7. colors-pintat - pos 5 si base
                   (t (celda-colors-pintat-bolla celda)))            ;                   pos 6 si bolla
             (cond (base nil)                                        ; 8. color-propi - nil si base
@@ -169,6 +165,21 @@
                   (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
             nil)))                                                  ; 11. visio - nil de moment
 
+;; tenemos las coordenadas siempre al final del mapa
+(defun celda-coord (celda)
+    (car (reverse celda)))
+
+; coord-amb-desplacament: suma dx dy a una coordenada
+(defun coord-amb-desplacament (coord mapa)
+    (list (+ (car coord) (estat-dx mapa))
+          (+ (cadr coord) (estat-dy mapa))))
+
+
+(defun estat-torn (mapa) (car (car mapa)))
+(defun estat-pintura-e1 (mapa) (cadr (car mapa)))
+(defun estat-pintura-e2 (mapa) (caddr (car mapa)))
+(defun estat-dx (mapa) (cadddr (car mapa)))
+(defun estat-dy (mapa) (car (cddddr (car mapa))))
 (defun celda-tipus (celda) (caddr celda))
 (defun celda-equip (celda) (cadddr celda))
 (defun celda-colors-pintat-base (celda) (car (cddr (cddr celda))))
