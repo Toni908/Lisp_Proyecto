@@ -23,6 +23,7 @@
 ;; pintura e2, y el mapa
 (defun inici ()
     ;(dribble "debug.txt")
+    ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
     (monitor (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
     ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
     ;(print (trobar-unitats (cons (list 1 200 200 500 500) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
@@ -36,7 +37,8 @@
 (defun iniciar-mapa (mapa f)
     (cond ((null mapa) nil)
           (t (cons (iniciar-mapa-fila (car mapa) f 0)
-                   (iniciar-mapa (cdr mapa) (+ f 1)))))
+                   (iniciar-mapa (cdr mapa) (+ f 1))))
+    )
 )
 
 ; iniciar-mapa-fila: recorre les cel·les d'una fila afegint meta-informació
@@ -47,7 +49,8 @@
 (defun iniciar-mapa-fila (fila f c)
     (cond ((null fila) nil)
           (t (cons (iniciar-mapa-celda (car fila) f c)
-                   (iniciar-mapa-fila (cdr fila) f (+ c 1)))))
+                   (iniciar-mapa-fila (cdr fila) f (+ c 1))))
+    )
 )
 
 ; iniciar-mapa-celda: afegeix coordenada a la cel·la, i si és base també id i ()
@@ -61,30 +64,71 @@
           ((pertany 'lab celda)
            (append celda (list 'nil (list f c))))
           (t
-           (append celda (list (list f c))))))
+           (append celda (list (list f c))))
+    )
+)
 
 ; id-base: retorna 1 si és base e1, 2 si és base e2
 (defun id-base (celda)
     (cond ((pertany 'e1 celda) 1)
-          (t 2)))
+          (t 2)
+    )
+)
 
 (defun monitor (mapa)
-    (pinta mapa)
-    (cond
-        ; Condición de fin de partida
-        ;((fi-partida mapa) (mostra-guanyador mapa))
-        (t
-            ; Esperar tecla
-            (let* ((tecla (get-key)))
-                (cond
-                    ((= tecla 333) (monitor (fer-torn mapa)))  ; flecha derecha → avanzar turno
-                    ((= tecla 336) (cls))                           ; flecha abajo, salir
-                    (t (monitor mapa))                          ; cualquier otra → no avanzar
+    (let* ((unitats (trobar-unitats mapa)))
+        (pinta mapa)
+        (cond
+            ((fi-partida mapa unitats) (mostra-guanyador mapa unitats))
+            (t
+                (let* ((tecla (get-key)))
+                    (cond
+                        ((= tecla 333) (monitor (fer-torn mapa)))
+                        ((= tecla 336) (cls))
+                        (t (monitor mapa))
+                    )
                 )
             )
         )
     )
 )
+
+; mostra-guanyador: determina i mostra el guanyador
+; Paràmetres:
+;   mapa    - el mapa
+;   unitats - ((unitats-e1) (unitats-e2))
+(defun mostra-guanyador (mapa unitats)
+    (let* ((te-base-e1 (te-base (car unitats)))
+           (te-base-e2 (te-base (cadr unitats)))
+           (bolles-e1 (compta-bolles (car unitats)))
+           (bolles-e2 (compta-bolles (cadr unitats)))
+           (pintura-e1 (estat-pintura-e1 mapa))
+           (pintura-e2 (estat-pintura-e2 mapa))
+           (guanyador
+               (cond
+                   ; base e1 destruida → guanya e2 ; base e2 destruida → guanya e1
+                   ((not te-base-e1) 'e2)
+                   ((not te-base-e2) 'e1)
+                   ; desempat per bolles
+                   ((> bolles-e1 bolles-e2) 'e1)
+                   ((> bolles-e2 bolles-e1) 'e2)
+                   ; desempat per pintura
+                   ((> pintura-e1 pintura-e2) 'e1)
+                   ((> pintura-e2 pintura-e1) 'e2)
+                   ; desempat aleatori
+                   (t (cond ((= (random 2) 0) 'e1)
+                            (t 'e2))))))
+        (print guanyador)
+        guanyador))
+
+; compta-bolles: compta les bolles vives d'un equip
+; Paràmetres:
+;   unitats-equip - llista d'unitats d'un equip
+(defun compta-bolles (unitats-equip)
+    (cond ((null unitats-equip) 0)
+          ((equal (car (cddddr (car unitats-equip))) 'bolla)
+           (+ 1 (compta-bolles (cdr unitats-equip))))
+          (t (compta-bolles (cdr unitats-equip)))))
 
 (defun fer-torn (mapa)
     (let* ((equip (equip-actual mapa)) ;; equip actual
@@ -97,10 +141,32 @@
     )
 )
 
-(defun fi-partida (mapa)
-    (cond 
-        ((base-destruida) t)
+; cuenta laboratorios del mapa, y devuelve un array de (lab e1, lab e2)
+(defun comptar-labs (mapa)
+    (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
+)
+
+(defun compta-labs-e (mapa x)
+    (cond ((null mapa) 0)
+          (t (+ (compta-labs-files (car mapa) x) (compta-labs-e (cdr mapa) x)))
+    )    
+)
+
+(defun compta-labs-files (fila x)
+    (cond ((null fila) 0)
+          ((and (equal (caddr (car fila)) 'lab) 
+                (equal (cadddr (car fila)) x))
+           (+ 1 (compta-labs-files (cdr fila) x)))
+          (t (compta-labs-files (cdr fila) x))
+    )
+)
+
+(defun fi-partida (mapa unitats)
+    (cond
+        ((not (te-base (car unitats))) t)   ; base e1 destruida
+        ((not (te-base (cadr unitats))) t)  ; base e2 destruida
         ((>= (torn mapa) MAX-TORNS) t)
+        (t nil)
     )
 )
 
@@ -109,10 +175,6 @@
     ((= (mod (torn mapa) 2) 0) 'e2)
     (t 'e1)
   )
-)
-
-(defun mostra-guanyador (mapa)
-    (t)
 )
 
 ;; funcion de clase
@@ -260,6 +322,14 @@
            (cons (celda-a-unitat (car celdas) mapa)
                  (trobar-unitats-llista (cdr celdas) mapa equip)))
           (t (trobar-unitats-llista (cdr celdas) mapa equip))))
+
+; te-base: comprova si una llista d'unitats té una base
+; Paràmetres:
+;   unitats-equip - llista d'unitats d'un equip 
+(defun te-base (unitats-equip)
+    (cond ((null unitats-equip) nil)
+          ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
+          (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
 
 ; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
 (defun trobar-unitats (mapa)
