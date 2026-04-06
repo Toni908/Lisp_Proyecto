@@ -68,24 +68,24 @@
     (cond ((pertany 'e1 celda) 1)
           (t 2)))
 
-
 (defun monitor (mapa)
-    (let* ((unitats (trobar-unitats mapa)))
-        (pinta mapa)
-        (cond
-            ((fi-partida mapa unitats) (mostra-guanyador mapa unitats))
-            (t
-                (let* ((tecla (get-key)))
-                    (cond
-                        ((= tecla 333) (monitor (fer-torn mapa)))
-                        ((= tecla 336) (cls))
-                        (t (monitor mapa))
-                    )
+    (pinta mapa)
+    (cond
+        ; Condición de fin de partida
+        ;((fi-partida mapa) (mostra-guanyador mapa))
+        (t
+            ; Esperar tecla
+            (let* ((tecla (get-key)))
+                (cond
+                    ((= tecla 333) (monitor (fer-torn mapa)))  ; flecha derecha → avanzar turno
+                    ((= tecla 336) (cls))                           ; flecha abajo, salir
+                    (t (monitor mapa))                          ; cualquier otra → no avanzar
                 )
             )
         )
     )
 )
+
 (defun fer-torn (mapa)
     (let* ((equip (equip-actual mapa)) ;; equip actual
            ; (unitats (trobar-unitats mapa equip))
