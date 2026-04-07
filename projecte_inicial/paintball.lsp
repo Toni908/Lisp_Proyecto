@@ -24,7 +24,7 @@
 (defun inici ()
     ;(dribble "debug.txt")
     ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
-    (monitor (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
+    (monitor (cons (list 0 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
     ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
     ;(print (trobar-unitats (cons (list 1 200 200 500 500) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
     ;(dribble)
@@ -131,13 +131,30 @@
           (t (compta-bolles (cdr unitats-equip)))))
 
 (defun fer-torn (mapa)
-    (let* ((equip (equip-actual mapa)) ;; equip actual
-           ; (unitats (trobar-unitats mapa equip))
-           ; Para cada unidad, llamar al agente y aplicar las acciones
-           ; (nou-mapa (aplicar-accions mapa equip unitats))
+    (let* ((equip (equip-actual mapa))
+           (labs (comptar-labs mapa))
+           (labs-equip (cond ((equal equip 'e1) (car labs))
+                             (t (cadr labs))))
+           ; Actualitzar pintura del equip actiu
+           (nou-estat (cond 
+               ((equal equip 'e1)
+                (list (+ 1 (torn mapa))
+                      (+ (estat-pintura-e1 mapa) 2 labs-equip)
+                      (estat-pintura-e2 mapa)
+                      (estat-dx mapa)
+                      (estat-dy mapa)))
+               (t
+                (list (+ 1 (torn mapa))
+                      (estat-pintura-e1 mapa)
+                      (+ (estat-pintura-e2 mapa) 2 labs-equip)
+                      (estat-dx mapa)
+                      (estat-dy mapa)))))
+           (mapa-actualitzat (cons nou-estat (cdr mapa)))
+           ; TODO: decrementar cooldowns
+           ; TODO: cridar agents i aplicar accions
           )
-        ; Incrementar el turno
-        (cons (cons (+ 1 (car (car mapa))) (cdr (car mapa))) (cdr mapa))
+        ; Incrementar el torn
+        (cons nou-estat (cdr mapa-actualitzat))
     )
 )
 
@@ -176,6 +193,8 @@
     (t 'e1)
   )
 )
+
+(defun torn (mapa) (car (car mapa)))
 
 ;; funcion de clase
 (defun llegeix-exp (nom-fitxer)
