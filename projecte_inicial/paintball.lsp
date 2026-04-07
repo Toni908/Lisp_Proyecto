@@ -196,7 +196,33 @@
                   (butlast celda 3) ; quitamos cooldowns y coord
                   (list nou-trp nou-trm (celda-coord celda)))))
              (t celda)))
-         (decrementar-celdas (cdr fila) equip)))))
+         (decrementar-celdas (cdr fila) equip)))
+    )
+)
+
+(defun aplicar-accio (mapa accio unitat)
+  (cond
+    ((equal (car accio) 'crea-bolla)
+     (aplicar-crea-bolla mapa (cadr accio) unitat))
+
+    ((equal (car accio) 'pinta)
+     (aplicar-pinta mapa (cadr accio) unitat))
+
+    ((equal (car accio) 'mou)
+     (aplicar-mou mapa (cadr accio) unitat))
+
+    (t mapa))
+)
+
+(defun aplicar-accions (mapa accions unitat)
+  (cond
+    ((null accions) mapa)
+    (t (aplicar-accions
+         (aplicar-accio mapa (car accions) unitat)
+         (cdr accions)
+         unitat))
+    )
+)
 
 ; cuenta laboratorios del mapa, y devuelve un array de (lab e1, lab e2)
 (defun comptar-labs (mapa)
