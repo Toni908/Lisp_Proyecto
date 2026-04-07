@@ -170,7 +170,33 @@
     )
 )
 
-(defun decrementar-cooldowns (mapa equip) mapa)
+(defun decrementar-cooldowns (mapa equip)
+  (cons (car mapa) ; mantenemos el estado
+        (decrementar-filas (cdr mapa) equip)))
+
+(defun decrementar-filas (mapa equip)
+  (cond
+    ((null mapa) nil)
+    (t (cons (decrementar-celdas (car mapa) equip)
+             (decrementar-filas (cdr mapa) equip)))))
+
+(defun decrementar-celdas (fila equip)
+  (cond
+    ((null fila) nil)
+    (t (cons
+         (let ((celda (car fila)))
+           (cond
+             ((and (pertany 'bolla celda)
+                   (equal (celda-equip celda) equip))
+              (let* ((trp (celda-tr-pintar-bolla celda))
+                     (trm (celda-tr-moure-bolla celda))
+                     (nou-trp (max 0 (- trp 1)))
+                     (nou-trm (max 0 (- trm 1))))
+                (append
+                  (butlast celda 3) ; quitamos cooldowns y coord
+                  (list nou-trp nou-trm (celda-coord celda)))))
+             (t celda)))
+         (decrementar-celdas (cdr fila) equip)))))
 
 ; cuenta laboratorios del mapa, y devuelve un array de (lab e1, lab e2)
 (defun comptar-labs (mapa)
