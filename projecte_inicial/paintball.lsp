@@ -148,15 +148,29 @@
                       (estat-pintura-e1 mapa)
                       (+ (estat-pintura-e2 mapa) 2 labs-equip)
                       (estat-dx mapa)
-                      (estat-dy mapa)))))
-           (mapa-actualitzat (cons nou-estat (cdr mapa)))
-           ; TODO: decrementar cooldowns
-           ; TODO: cridar agents i aplicar accions
+                      (estat-dy mapa)))
+                ))
+                (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
+                (mapa-actualitzat (ia-action mapa-v2)
           )
-        ; Incrementar el torn
-        (cons nou-estat (cdr mapa-actualitzat))
+        
+        mapa-actualitzat
     )
 )
+
+(defun ia-action (mapa)
+    (let* ((equip (equip-actual mapa))
+           (unitats (trobar-unitats mapa))
+        )
+        ; Aquí cridaríem a la funció de la IA corresponent segons l'equip actiu, passant el mapa i les unitats de l'equip
+        ; Per exemple:
+        ; (cond ((equal equip 'e1) (ia-abc123 mapa unitats-equip))
+        ;       (t (ia-xyz999 mapa unitats-equip)))
+        mapa ; de moment retornem el mapa sense canvis
+    )
+)
+
+(defun decrementar-cooldowns (mapa equip) mapa)
 
 ; cuenta laboratorios del mapa, y devuelve un array de (lab e1, lab e2)
 (defun comptar-labs (mapa)
