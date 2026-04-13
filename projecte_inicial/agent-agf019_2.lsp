@@ -3,12 +3,12 @@
 ;; Estudiants: ABC, XYZ.
 ;; Professor: XXX.
 ;; Lliurament: primera convocatòria.
-;; Fitxer de l'agent intel·ligent XYZ999.
+;; Fitxer de l'agent intel·ligent ABC123.
 ;; <Descripció de les funcions d'aquest fitxer>
 
 ;; Documentació d'això...
-(defun agent-xyz999 (dades)
-    "Retorna la jugada que realitza l'agent XYZ999 en un torn donades les dades de la partida."
+(defun agent-agf019_2 (dades)
+    "Retorna la jugada que realitza l'agent ABC123 en un torn donades les dades de la partida."
     ; (car dades) = ronda
     ; (cadr dades) = equip
     ; etc.
@@ -26,9 +26,9 @@
 
 
 ;; Recordau que qualsevol funció no predefinida necessària per a l'agent, ha d'estar definida en aquest fitxer
-;; i ha d'estar prefixada amb "agent-xyz999-" per evitar conflictes amb altres agents o mòduls.
+;; i ha d'estar prefixada amb "agent-abc123-" per evitar conflictes amb altres agents o mòduls.
 ;; Per exemple:
-(defun agent-xyz999-longitud (llista)
+(defun agent-agf019_2-longitud (llista)
     "Retorna la longitud d'una llista."
     (cond ((null llista) 0)
-          (t (+ 1 (agent-xyz999-longitud (cdr llista))))))
+          (t (+ 1 (agent-abc123-longitud (cdr llista))))))
