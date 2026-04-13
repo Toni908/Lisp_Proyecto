@@ -30,6 +30,73 @@
     ;(dribble)
 )
 
+;; funcion de clase
+(defun llegeix-exp (nom-fitxer)
+    (let* ((fp (open nom-fitxer))
+    (e (read fp nil nil)))
+    (close fp)
+    e)
+)
+
+(defun monitor (mapa)
+    (let* ((unitats (trobar-unitats mapa)))
+        (pinta mapa)
+        (cond
+            ((fi-partida mapa unitats) (mostra-guanyador mapa unitats))
+            (t
+                (let* ((tecla (get-key)))
+                    (cond
+                        ((= tecla 333) (monitor (fer-torn mapa)))
+                        ((= tecla 336) (cls))
+                        (t (monitor mapa))
+                    )
+                )
+            )
+        )
+    )
+)
+
+
+
+(defun fer-torn (mapa)
+    (let* ((equip (equip-actual mapa))
+           (labs (comptar-labs mapa))
+           (labs-equip (cond ((equal equip 'e1) (car labs))
+                             (t (cadr labs))))
+           (nou-estat (cond 
+               ((equal equip 'e1)
+                (list (+ 1 (torn mapa))
+                      (+ (estat-pintura-e1 mapa) 2 labs-equip)
+                      (estat-pintura-e2 mapa)
+                      (estat-dx mapa)
+                      (estat-dy mapa)))
+               (t
+                (list (+ 1 (torn mapa))
+                      (estat-pintura-e1 mapa)
+                      (+ (estat-pintura-e2 mapa) 2 labs-equip)
+                      (estat-dx mapa)
+                      (estat-dy mapa)))))
+           (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
+           (mapa-actualitzat (ia-action mapa-v2)))
+        mapa-actualitzat
+    )
+)
+
+(defun ia-action (mapa)
+    (let* ((equip (equip-actual mapa))
+           (unitats (trobar-unitats mapa))
+        )
+        ; Aquí cridaríem a la funció de la IA corresponent segons l'equip actiu, passant el mapa i les unitats de l'equip
+        ; Per exemple:
+        ; (cond ((equal equip 'e1) (ia-abc123 mapa unitats-equip))
+        ;       (t (ia-xyz999 mapa unitats-equip)))
+        mapa ; de moment retornem el mapa sense canvis
+    )
+)
+
+; ------------------------------------------------------------------
+; Inici de mapa, metadatos per poder treballar millor
+
 ; iniciar-mapa: recorre les files del mapa afegint meta-informació
 ; Paràmetres:
 ;   mapa - el mapa sense meta-informació
@@ -75,23 +142,128 @@
     )
 )
 
-(defun monitor (mapa)
-    (let* ((unitats (trobar-unitats mapa)))
-        (pinta mapa)
-        (cond
-            ((fi-partida mapa unitats) (mostra-guanyador mapa unitats))
-            (t
-                (let* ((tecla (get-key)))
-                    (cond
-                        ((= tecla 333) (monitor (fer-torn mapa)))
-                        ((= tecla 336) (cls))
-                        (t (monitor mapa))
-                    )
-                )
-            )
+; ------------------------------------------------------------------
+
+
+
+; ------------------------------------------------------------------
+; decrementar cooldowns logica
+
+(defun decrementar-cooldowns (mapa equip)
+  (cons (car mapa) ; mantenemos el estado
+        (decrementar-filas (cdr mapa) equip)))
+
+(defun decrementar-filas (mapa equip)
+  (cond
+    ((null mapa) nil)
+    (t (cons (decrementar-celdas (car mapa) equip)
+             (decrementar-filas (cdr mapa) equip)))))
+
+(defun decrementar-celdas (fila equip)
+    (cond
+        ((null fila) nil)
+        (t (cons
+            (let* ((celda (car fila)))
+                (cond
+                    ((and (pertany 'bolla celda)
+                          (equal (celda-equip celda) equip)) ; si es bolla y de nuestro equipo activo
+                     (list (car celda)                        ; terra
+                           (cadr celda)                       ; color
+                           (caddr celda)                      ; bolla
+                           (cadddr celda)                     ; equip
+                           (celda-color-propi-bolla celda)    ; color-propi
+                           (celda-colors-pintat-bolla celda)  ; colors-pintat
+                           (celda-id-bolla celda)             ; id
+                           (max 0 (- (celda-tr-pintar-bolla celda) 1)) ; tr-pintar
+                           (max 0 (- (celda-tr-moure-bolla celda) 1))  ; tr-moure
+                           (celda-coord celda)))              ; coord
+                    (t celda)))
+            (decrementar-celdas (cdr fila) equip))
         )
     )
 )
+
+;----------------------------------------------------------------------------------
+
+
+
+;----------------------------------------------------------------------------------
+; Logica de aplicar acciones en una lista
+
+(defun aplicar-accio (mapa accio unitat)
+  (cond
+    ((equal (car accio) 'crea-bolla)
+     (aplicar-crea-bolla mapa (cadr accio) unitat))
+
+    ((equal (car accio) 'pinta)
+     (aplicar-pinta mapa (cadr accio) unitat))
+
+    ((equal (car accio) 'mou)
+     (aplicar-mou mapa (cadr accio) unitat))
+
+    (t mapa))
+)
+
+(defun aplicar-accions (mapa accions unitats)
+  (cond
+    ((null accions) mapa)
+    (t (aplicar-accions
+         (aplicar-accio mapa (car accions) (car unitats))
+         (cdr accions)
+         (cdr unitat)))
+    )
+)
+
+;-------------------------------------------------------------------------------
+
+
+
+;-------------------------------------------------------------------------------
+; cuenta laboratorios del mapa, y devuelve un array de (numero_lab_e1, numero_lab_e2)
+
+(defun comptar-labs (mapa)
+    (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
+)
+
+(defun compta-labs-e (mapa x)
+    (cond ((null mapa) 0)
+          (t (+ (compta-labs-files (car mapa) x) (compta-labs-e (cdr mapa) x)))
+    )    
+)
+
+(defun compta-labs-files (fila x)
+    (cond ((null fila) 0)
+          ((and (equal (caddr (car fila)) 'lab) 
+                (equal (cadddr (car fila)) x))
+           (+ 1 (compta-labs-files (cdr fila) x)))
+          (t (compta-labs-files (cdr fila) x))
+    )
+)
+
+;------------------------------------------------------------------------------------------------
+
+
+
+;------------------------------------------------------------------------------------------------
+; Control fi partida
+
+(defun fi-partida (mapa unitats)
+    (cond
+        ((not (te-base (car unitats))) t)   ; base e1 destruida
+        ((not (te-base (cadr unitats))) t)  ; base e2 destruida
+        ((>= (torn mapa) MAX-TORNS) t)
+        (t nil)
+    )
+)
+
+; te-base: comprova si una llista d'unitats té una base
+; Paràmetres:
+;   unitats-equip - llista d'unitats d'un equip 
+(defun te-base (unitats-equip)
+    (cond ((null unitats-equip) nil)
+          ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
+          (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
+
 
 ; mostra-guanyador: determina i mostra el guanyador
 ; Paràmetres:
@@ -130,161 +302,39 @@
            (+ 1 (compta-bolles (cdr unitats-equip))))
           (t (compta-bolles (cdr unitats-equip)))))
 
-(defun fer-torn (mapa)
-    (let* ((equip (equip-actual mapa))
-           (labs (comptar-labs mapa))
-           (labs-equip (cond ((equal equip 'e1) (car labs))
-                             (t (cadr labs))))
-           ; Actualitzar pintura del equip actiu
-           (nou-estat (cond 
-               ((equal equip 'e1)
-                (list (+ 1 (torn mapa))
-                      (+ (estat-pintura-e1 mapa) 2 labs-equip)
-                      (estat-pintura-e2 mapa)
-                      (estat-dx mapa)
-                      (estat-dy mapa)))
-               (t
-                (list (+ 1 (torn mapa))
-                      (estat-pintura-e1 mapa)
-                      (+ (estat-pintura-e2 mapa) 2 labs-equip)
-                      (estat-dx mapa)
-                      (estat-dy mapa)))
-                ))
-                (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
-                (mapa-actualitzat (ia-action mapa-v2)
-          )
-        
-        mapa-actualitzat
-    )
-)
+;------------------------------------------------------------------------------------------------      
 
-(defun ia-action (mapa)
-    (let* ((equip (equip-actual mapa))
-           (unitats (trobar-unitats mapa))
-        )
-        ; Aquí cridaríem a la funció de la IA corresponent segons l'equip actiu, passant el mapa i les unitats de l'equip
-        ; Per exemple:
-        ; (cond ((equal equip 'e1) (ia-abc123 mapa unitats-equip))
-        ;       (t (ia-xyz999 mapa unitats-equip)))
-        mapa ; de moment retornem el mapa sense canvis
-    )
-)
 
-(defun decrementar-cooldowns (mapa equip)
-  (cons (car mapa) ; mantenemos el estado
-        (decrementar-filas (cdr mapa) equip)))
 
-(defun decrementar-filas (mapa equip)
-  (cond
-    ((null mapa) nil)
-    (t (cons (decrementar-celdas (car mapa) equip)
-             (decrementar-filas (cdr mapa) equip)))))
+;------------------------------------------------------------------------------------------------   
+; funcions per construir l'array esta a partir del mapa
 
-(defun decrementar-celdas (fila equip)
-  (cond
-    ((null fila) nil)
-    (t (cons
-         (let ((celda (car fila)))
-           (cond
-             ((and (pertany 'bolla celda)
-                   (equal (celda-equip celda) equip))
-              (let* ((trp (celda-tr-pintar-bolla celda))
-                     (trm (celda-tr-moure-bolla celda))
-                     (nou-trp (max 0 (- trp 1)))
-                     (nou-trm (max 0 (- trm 1))))
-                (append
-                  (butlast celda 3) ; quitamos cooldowns y coord
-                  (list nou-trp nou-trm (celda-coord celda)))))
-             (t celda)))
-         (decrementar-celdas (cdr fila) equip)))
-    )
-)
-
-(defun aplicar-accio (mapa accio unitat)
-  (cond
-    ((equal (car accio) 'crea-bolla)
-     (aplicar-crea-bolla mapa (cadr accio) unitat))
-
-    ((equal (car accio) 'pinta)
-     (aplicar-pinta mapa (cadr accio) unitat))
-
-    ((equal (car accio) 'mou)
-     (aplicar-mou mapa (cadr accio) unitat))
-
-    (t mapa))
-)
-
-(defun aplicar-accions (mapa accions unitat)
-  (cond
-    ((null accions) mapa)
-    (t (aplicar-accions
-         (aplicar-accio mapa (car accions) unitat)
-         (cdr accions)
-         unitat))
-    )
-)
-
-; cuenta laboratorios del mapa, y devuelve un array de (lab e1, lab e2)
-(defun comptar-labs (mapa)
-    (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
-)
-
-(defun compta-labs-e (mapa x)
-    (cond ((null mapa) 0)
-          (t (+ (compta-labs-files (car mapa) x) (compta-labs-e (cdr mapa) x)))
-    )    
-)
-
-(defun compta-labs-files (fila x)
-    (cond ((null fila) 0)
-          ((and (equal (caddr (car fila)) 'lab) 
-                (equal (cadddr (car fila)) x))
-           (+ 1 (compta-labs-files (cdr fila) x)))
-          (t (compta-labs-files (cdr fila) x))
-    )
-)
-
-(defun fi-partida (mapa unitats)
-    (cond
-        ((not (te-base (car unitats))) t)   ; base e1 destruida
-        ((not (te-base (cadr unitats))) t)  ; base e2 destruida
-        ((>= (torn mapa) MAX-TORNS) t)
-        (t nil)
-    )
-)
-
-(defun equip-actual (mapa)
-  (cond 
-    ((= (mod (torn mapa) 2) 0) 'e2)
-    (t 'e1)
-  )
-)
-
-(defun torn (mapa) (car (car mapa)))
-
-;; funcion de clase
-(defun llegeix-exp (nom-fitxer)
-    (let* ((fp (open nom-fitxer))
-    (e (read fp nil nil)))
-    (close fp)
-    e)
-)
-
-; pertany: comprova si x pertany a la llista l, funcion de clase
-(defun pertany (x l)
-    (cond ((null l) nil)
-          ((equal x (car l)) t)
-          (t (pertany x (cdr l)))))
-
-; get-equip-celda: retorna l'equip de la celda
-(defun get-equip-celda (celda)
-    (cadddr celda))
+; trobar-unitats-llista: filtra les celdas que son unitats
+(defun trobar-unitats-llista (celdas mapa equip)
+    (cond ((null celdas) nil)
+          ((and (es-unitat (car celdas))
+                (equal (get-equip-celda (car celdas)) equip))
+           (cons (celda-a-unitat (car celdas) mapa)
+                 (trobar-unitats-llista (cdr celdas) mapa equip)))
+          (t (trobar-unitats-llista (cdr celdas) mapa equip))))
 
 ; es-unitat: comprova si una celda té una unitat (base o bolla)
 (defun es-unitat (celda)
     (cond ((pertany 'base celda) t)
           ((pertany 'bolla celda) t)
           (t nil)))
+
+
+; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
+(defun trobar-unitats (mapa)
+    (let* ((celdas (celdas-mapa (cdr mapa))))
+        (list
+            (trobar-unitats-llista celdas mapa 'e1)
+            (trobar-unitats-llista celdas mapa 'e2))))
+
+(defun celdas-mapa (mapa)
+    (cond ((null mapa) nil)
+          (t (append (car mapa) (celdas-mapa (cdr mapa))))))
 
 ; celda-a-unitat: construeix la llista d'info d'una unitat a partir de la celda i l'estat
 (defun celda-a-unitat (celda mapa)
@@ -372,16 +422,35 @@
     (+ (* (- (car coord-a) (car coord-b)) (- (car coord-a) (car coord-b)))
        (* (- (cadr coord-a) (cadr coord-b)) (- (cadr coord-a) (cadr coord-b)))))
 
-;; tenemos las coordenadas siempre al final del mapa
-(defun celda-coord (celda)
-    (car (reverse celda)))
+;------------------------------------------------------------------------------------------------   
+
+
+
+;----------------------------------------------------------------------------------------
+;Per treballar amb el desplazament
 
 ; coord-amb-desplacament: suma dx dy a una coordenada
 (defun coord-amb-desplacament (coord mapa)
     (list (+ (car coord) (estat-dx mapa))
-          (+ (cadr coord) (estat-dy mapa))))
+          (+ (cadr coord) (estat-dy mapa))
+    )
+)
 
-;; funcions per agafar x-element del mapa, ya que cada unitat les te a llocs diferents
+; coord-real: resta dx dy a una coordenada
+(defun coord-real (coord mapa)
+    (list (- (car coord) (estat-dx mapa))
+          (- (cadr coord) (estat-dy mapa))
+    )
+)
+
+;------------------------------------------------------------------------------
+
+
+
+;-----------------------------------------------------------------------------------------
+; funcions per agafar x-element del mapa, ya que cada unitat les te a llocs diferents
+; tambe funcions que se utilitzen un poc per tot
+
 (defun estat-torn (mapa) (car (car mapa)))
 (defun estat-pintura-e1 (mapa) (cadr (car mapa)))
 (defun estat-pintura-e2 (mapa) (caddr (car mapa)))
@@ -398,31 +467,23 @@
 (defun celda-tr-moure-bolla (celda) (car (cddddr (cddr (cddr celda)))))
 (defun celda-coord-base (celda) (caddr (cddr (cddr celda)))) ;; realment podria sustituir aquestes dues per celda-coord, ya que el vaig cambiar per a sempre estar al final la coordenada en el mapa nostre
 (defun celda-coord-bolla (celda) (cadr (cddddr (cddr (cddr celda)))))
+(defun celda-coord (celda) (car (reverse celda)))
+(defun get-equip-celda (celda) (cadddr celda)) ; get-equip-celda: retorna l'equip de la celda
+(defun torn (mapa) (car (car mapa))) ;; retorna el torn de la partida
 
-; trobar-unitats-llista: filtra les celdas que son unitats
-(defun trobar-unitats-llista (celdas mapa equip)
-    (cond ((null celdas) nil)
-          ((and (es-unitat (car celdas))
-                (equal (get-equip-celda (car celdas)) equip))
-           (cons (celda-a-unitat (car celdas) mapa)
-                 (trobar-unitats-llista (cdr celdas) mapa equip)))
-          (t (trobar-unitats-llista (cdr celdas) mapa equip))))
+(defun equip-actual (mapa)
+  (cond 
+    ((= (mod (torn mapa) 2) 0) 'e2)
+    (t 'e1)
+  )
+)
 
-; te-base: comprova si una llista d'unitats té una base
-; Paràmetres:
-;   unitats-equip - llista d'unitats d'un equip 
-(defun te-base (unitats-equip)
-    (cond ((null unitats-equip) nil)
-          ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
-          (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
 
-; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
-(defun trobar-unitats (mapa)
-    (let* ((celdas (celdas-mapa (cdr mapa))))
-        (list
-            (trobar-unitats-llista celdas mapa 'e1)
-            (trobar-unitats-llista celdas mapa 'e2))))
+; pertany: comprova si x pertany a la llista l, funcion de clase
+(defun pertany (x l)
+    (cond ((null l) nil)
+          ((equal x (car l)) t)
+          (t (pertany x (cdr l)))))
 
-(defun celdas-mapa (mapa)
-    (cond ((null mapa) nil)
-          (t (append (car mapa) (celdas-mapa (cdr mapa))))))
+;-----------------------------------------------------------------------------------------
+
