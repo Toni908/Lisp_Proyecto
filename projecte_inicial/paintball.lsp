@@ -25,29 +25,29 @@
 
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
-(setq mapa-test
-  (cons
-    (list 0 200 200 0 0)
-    (iniciar-mapa
-      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
-        ((terra g) (terra r) (terra g) (terra b) (terra r))
-        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
-      0)))
+;(setq mapa-test
+;  (cons
+;    (list 0 200 200 0 0)
+;    (iniciar-mapa
+;      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
+;        ((terra g) (terra r) (terra g) (terra b) (terra r))
+;        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
+;      0)))
 
-(setq mapa-amb-bolla
-  (substituir-celda '(1 1)
-    '(terra r bolla e1 r (r) 99 0 0 (1 1))
-    (cdr mapa-test)))
+;(setq mapa-amb-bolla
+;  (substituir-celda '(1 1)
+;    '(terra r bolla e1 r (r) 99 0 0 (1 1))
+;    (cdr mapa-test)))
 
-(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
+;(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
 
-(setq unitat-bolla
-  (list 0 'e1 150 99 'bolla (list 1 1) (list 'r) 'r 0 300 nil))
+;(setq unitat-bolla
+;  (list 0 'e1 150 99 'bolla (list 1 1) (list 'r) 'r 0 300 nil))
 
-(setq unitat-base
-  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
+;(setq unitat-base
+;  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
 
-(setq mapa2 (aplicar-mou mapa-amb-bolla (list 1 2) unitat-bolla))
+;(setq mapa2 (aplicar-mou mapa-amb-bolla (list 1 2) unitat-bolla))
 
 
 ; (setq mapa2 (aplicar-crea-bolla mapa-test (list 'r (list 2 1)) unitat-base))
