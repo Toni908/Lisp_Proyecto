@@ -271,16 +271,21 @@
 
               ;; colores acumulados
               (nous-colors
-               (cond
-                 ((equal tipo 'bolla)
-                  (if (pertany color (celda-colors-pintat-bolla celda-dst))
-                      (celda-colors-pintat-bolla celda-dst)
-                      (cons color (celda-colors-pintat-bolla celda-dst))))
-                 ((equal tipo 'base)
-                  (if (pertany color (celda-colors-pintat-base celda-dst))
-                      (celda-colors-pintat-base celda-dst)
-                      (cons color (celda-colors-pintat-base celda-dst))))
-                 (t nil)))
+                (cond
+                    ((equal tipo 'bolla)
+                     (cond
+                       ((pertany color (celda-colors-pintat-bolla celda-dst))
+                        (celda-colors-pintat-bolla celda-dst))
+                       (t
+                        (cons color (celda-colors-pintat-bolla celda-dst)))))
+                    ((equal tipo 'base)
+                     (cond
+                       ((pertany color (celda-colors-pintat-base celda-dst))
+                        (celda-colors-pintat-base celda-dst))
+                       (t
+                        (cons color (celda-colors-pintat-base celda-dst)))))
+                    (t nil))
+              )
 
               ;; nueva celda destino
               (nova-celda
@@ -343,7 +348,8 @@
               (color-bolla (car (cddddr unitat)))
 
               (cooldown
-               (if (equal color-src color-bolla) 3 9))
+               (cond ((equal color-src color-bolla) 3)
+                     (t 9)))
 
               ;; actualizar unidad que dispara
               (celda-unitat (buscar-celda coord-src (celdas-mapa mapa-v2)))
