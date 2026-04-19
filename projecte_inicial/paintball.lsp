@@ -25,32 +25,28 @@
 
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
-;(setq mapa-test
-;  (cons
-;    (list 0 200 200 0 0)
-;    (iniciar-mapa
-;      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
-;        ((terra g) (terra r) (terra g) (terra b) (terra r))
-;        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
-;      0)))
+(setq mapa-test
+  (cons
+    (list 0 200 200 0 0)
+    (iniciar-mapa
+      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
+        ((terra g) (terra r) (terra g) (terra b) (terra r))
+        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
+      0)))
 
-;(setq mapa-amb-bolla
-;  (substituir-celda '(1 1)
-;    '(terra r bolla e1 r (r) 99 0 0 (1 1))
-;    (cdr mapa-test)))
+(setq mapa-amb-bolla
+  (substituir-celda '(1 1)
+    '(terra r bolla e1 r (r) 99 0 0 (1 1))
+    (cdr mapa-test)))
 
-;(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
-
-;(setq unitat-bolla
-;  (list 0 'e1 150 99 'bolla (list 1 1) (list 'r) 'r 0 300 nil))
-
-;(setq unitat-base
-;  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
-
+(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
+(setq unitat-bolla
+  (list 0 'e1 150 99 'bolla (list 1 1) (list 'r) 'r 0 300 nil))
+(setq unitat-base
+  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
 ;(setq mapa2 (aplicar-mou mapa-amb-bolla (list 1 2) unitat-bolla))
 
-
-; (setq mapa2 (aplicar-crea-bolla mapa-test (list 'r (list 2 1)) unitat-base))
+(setq mapa2 (aplicar-crea-bolla mapa-test (list 'b (list 1 1)) unitat-base))
 
 ; (setq unitat-bolla
   ;(list 0 'e1 150 33 'bolla (list 2 1) (list 'r) 'r 0 0 nil))
@@ -220,21 +216,23 @@
            (equip (cadr unitat))
            (pintura (caddr unitat)))
         (cond
-            ((null celda-dst) mapa)                      ; celda no existeix
-            ((> (d2 coord-src coord-dst) 2) mapa)        ; fora de rang
-            ((es-unitat celda-dst) mapa)                 ; ja hi ha una unitat
-            ((< pintura 50) mapa)                        ; no hi ha prou pintura
+            ((null celda-dst) mapa)
+            ((not (equal (car (cddddr unitat)) 'base)) mapa)
+            ((not (pertany color '(r g b))) mapa)
+            ((> (d2 coord-src coord-dst) 2) mapa)
+            ((es-unitat celda-dst) mapa)
+            ((< pintura 50) mapa)
             (t (let* (
-                (nou-id (+ (* (torn mapa) 10) (cond ((equal equip 'e1) 3) (t 4)))) ;; aixi segur que no es repeteix
-                (nova-bolla (list (car celda-dst)   ; terra
-                                  (cadr celda-dst)  ; color casella
+                (nou-id (+ (* (torn mapa) 10) (cond ((equal equip 'e1) 3) (t 4))))
+                (nova-bolla (list (car celda-dst)
+                                  (cadr celda-dst)
                                   'bolla
                                   equip
-                                  color             ; color-propi
-                                  (list color)      ; colors-pintat: comença amb el seu color
+                                  color
+                                  (list color)
                                   nou-id
-                                  0                 ; tr-pintar
-                                  0                 ; tr-moure
+                                  0
+                                  0
                                   coord-dst))
                 (nou-estat (cond
                     ((equal equip 'e1)
@@ -249,8 +247,15 @@
                            (- (estat-pintura-e2 mapa) 50)
                            (estat-dx mapa)
                            (estat-dy mapa)))))
-                (mapa-v2 (substituir-celda coord-dst nova-bolla (cdr mapa))))
-                (cons nou-estat mapa-v2))))))
+                (mapa-v2 (cons nou-estat (substituir-celda coord-dst nova-bolla (cdr mapa))))
+                ;; descomenta estas 3 lineas cuando la ia este lista
+                ;(unitat-nova (celda-a-unitat nova-bolla mapa-v2))
+                ;(accions (cond
+                ;    ((equal equip 'e1) (agent-agf019 unitat-nova))
+                ;    (t (agent-agf019_2 unitat-nova))))
+                ;(mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
+                )
+                mapa-v2)))))
 
 (defun aplicar-pinta (mapa args unitat)
   (let* ((color (car args))
@@ -384,33 +389,28 @@
            (celdas (celdas-mapa (cdr mapa)))
            (celda-dst (buscar-celda coord-dst celdas))
            (celda-src (buscar-celda coord-src celdas))
-           (dist (d2 coord-src coord-dst))
-           (cooldown-actual (celda-tr-moure-bolla celda-src)))
+           (dist (d2 coord-src coord-dst)))
         (cond
-            ((null celda-dst) mapa)                  ; casella no existeix
-            ((es-unitat celda-dst) mapa)             ; casella ocupada
-            ((> dist 2) mapa)                        ; fora de rang
-            ((> cooldown-actual 100) mapa)             ; cooldown actiu, no pot moure's
+            ((null celda-dst) mapa)
+            ((null celda-src) mapa)
+            ((not (equal (celda-tipus celda-src) 'bolla)) mapa)
+            ((es-unitat celda-dst) mapa)
+            ((> dist 2) mapa)
+            ((>= (celda-tr-moure-bolla celda-src) 100) mapa)
             (t
              (let* (
-                ; nou cooldown segons distancia i color casella destino
-                (nou-cooldown
-                    (let* ((base (cond ((= dist 1) 100)
-                                       (t 141)))
-                           (factor (cond ((equal (cadr celda-dst) (celda-color-propi-bolla celda-src)) 1)
-                                         (t 3))))
-                        (* base factor)))
-
-                ; casella origen queda com terra buida amb el seu color
+                (base-cooldown (cond ((= dist 2) 141) (t 100)))
+                (factor (cond ((equal (cadr celda-dst)
+                                      (celda-color-propi-bolla celda-src)) 1)
+                              (t 3)))
+                (nou-cooldown (* base-cooldown factor))
                 (celda-src-buida
                     (list (car celda-src)
                           (cadr celda-src)
                           coord-src))
-
-                ; casella destino amb la bolla
                 (nova-bolla
-                    (list (car celda-dst)             ; terra
-                          (cadr celda-dst)            ; color casella destino
+                    (list (car celda-dst)
+                          (cadr celda-dst)
                           'bolla
                           (celda-equip celda-src)
                           (celda-color-propi-bolla celda-src)
@@ -419,11 +419,8 @@
                           (celda-tr-pintar-bolla celda-src)
                           nou-cooldown
                           coord-dst))
-
-                ; primer substituim origen, despres destino
                 (mapa-v2 (substituir-celda coord-src celda-src-buida (cdr mapa)))
                 (mapa-v3 (substituir-celda coord-dst nova-bolla mapa-v2)))
-
                 (cons (car mapa) mapa-v3))))))
 
 ;-------------------------------------------------------------------------------
