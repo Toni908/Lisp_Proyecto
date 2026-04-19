@@ -41,17 +41,17 @@
 
 (setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
 (setq unitat-bolla
-  (list 0 'e1 150 99 'bolla (list 1 1) (list 'r) 'r 0 300 nil))
+  (list 0 'e1 150 99 'bolla (list 1 1) (list 'b) 'b 0 300 nil))
 (setq unitat-base
   (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
 ;(setq mapa2 (aplicar-mou mapa-amb-bolla (list 1 2) unitat-bolla))
 
-(setq mapa2 (aplicar-crea-bolla mapa-test (list 'b (list 1 1)) unitat-base))
+(setq mapa2 (aplicar-crea-bolla mapa-test (list 'b (list 2 1)) unitat-base))
 
-; (setq unitat-bolla
-  ;(list 0 'e1 150 33 'bolla (list 2 1) (list 'r) 'r 0 0 nil))
+(setq unitat-bolla
+  (list 0 'e1 150 33 'bolla (list 2 1) (list 'b) 'b 0 0 nil))
 
-; (setq mapa3 (aplicar-pinta mapa2 (list 'r (list 2 2)) unitat-bolla))
+ (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
 
 
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
@@ -258,23 +258,26 @@
                 mapa-v2)))))
 
 (defun aplicar-pinta (mapa args unitat)
-  (let* ((color (car args))
-         (coord-dst (coord-real (cadr args) mapa))
+  (let* ((coord-dst (coord-real args mapa))
          (coord-src (coord-real (cadr (cddddr unitat)) mapa))
          (celdas (celdas-mapa (cdr mapa)))
          (celda-dst (buscar-celda coord-dst celdas))
+         (celda-src (buscar-celda coord-src celdas))
          (equip-pinta (cadr unitat)))
 
     (cond
       ((null celda-dst) mapa)
+      ((null celda-src) mapa)
+      ((not (equal (celda-tipus celda-src) 'bolla)) mapa)
+      ((>= (celda-tr-pintar-bolla celda-src) 1) mapa)
       ((> (d2 coord-src coord-dst) 5) mapa)
 
       (t
-       (let* ((tipo (celda-tipus celda-dst))
+       (let* ((color (celda-color-propi-bolla celda-src))
+              (tipo (celda-tipus celda-dst))
               (equip (celda-equip celda-dst))
               (nou-color-suelo color)
-
-              ;; colores acumulados
+              
               (nous-colors
                 (cond
                     ((equal tipo 'bolla)
@@ -289,19 +292,14 @@
                         (celda-colors-pintat-base celda-dst))
                        (t
                         (cons color (celda-colors-pintat-base celda-dst)))))
-                    (t nil))
-              )
+                    (t nil)))
 
-              ;; nueva celda destino
               (nova-celda
                (cond
-                 ;; BOLLA
                  ((equal tipo 'bolla)
                   (cond
-                  ;destruir
                     ((>= (length nous-colors) 3)
                      (list (car celda-dst) nou-color-suelo (celda-coord celda-dst)))
-                     ;normal
                     (t
                      (list (car celda-dst)
                            nou-color-suelo
@@ -313,14 +311,10 @@
                            (celda-tr-pintar-bolla celda-dst)
                            (celda-tr-moure-bolla celda-dst)
                            (celda-coord celda-dst)))))
-
-                 ;; BASE
                  ((equal tipo 'base)
                   (cond
-                  ;destruir
                     ((>= (length nous-colors) 3)
                      (list (car celda-dst) nou-color-suelo (celda-coord celda-dst)))
-                     ;normal
                     (t
                      (list (car celda-dst)
                            nou-color-suelo
@@ -329,8 +323,6 @@
                            nous-colors
                            (celda-id-base celda-dst)
                            (celda-coord celda-dst)))))
-
-                 ;; LAB
                  ((equal tipo 'lab)
                   (list (car celda-dst)
                         nou-color-suelo
@@ -338,43 +330,31 @@
                         equip-pinta
                         nil
                         (celda-coord celda-dst)))
-
-                 ;; SUELO
                  (t
                   (append (list (car celda-dst) nou-color-suelo)
                           (cddr celda-dst)))))
 
-              ;; aplicar cambio en destino
               (mapa-v2 (substituir-celda coord-dst nova-celda (cdr mapa)))
 
-              ;; cooldown dinámico
-              (celda-src (buscar-celda coord-src (celdas-mapa (cdr mapa))))
+              ;; cooldown: triple si la casella origen no es del color de la bolla
               (color-src (cadr celda-src))
-              (color-bolla (car (cddddr unitat)))
+              (cooldown (cond ((equal color-src color) 3)
+                              (t 9)))
 
-              (cooldown
-               (cond ((equal color-src color-bolla) 3)
-                     (t 9)))
+              ;; actualitzar cooldown de la bolla que dispara
+              (nova-unitat-src
+                (list (car celda-src)
+                      (cadr celda-src)
+                      'bolla
+                      (celda-equip celda-src)
+                      (celda-color-propi-bolla celda-src)
+                      (celda-colors-pintat-bolla celda-src)
+                      (celda-id-bolla celda-src)
+                      cooldown
+                      (celda-tr-moure-bolla celda-src)
+                      (celda-coord celda-src)))
 
-              ;; actualizar unidad que dispara
-              (celda-unitat (buscar-celda coord-src (celdas-mapa mapa-v2)))
-
-              (mapa-final
-               (cond
-                 ((and celda-unitat (equal (celda-tipus celda-unitat) 'bolla))
-                  (let ((nova-unitat
-                         (list (car celda-unitat)
-                               (cadr celda-unitat)
-                               'bolla
-                               (celda-equip celda-unitat)
-                               (celda-color-propi-bolla celda-unitat)
-                               (celda-colors-pintat-bolla celda-unitat)
-                               (celda-id-bolla celda-unitat)
-                               cooldown
-                               (celda-tr-moure-bolla celda-unitat)
-                               (celda-coord celda-unitat))))
-                    (substituir-celda coord-src nova-unitat mapa-v2)))
-                 (t mapa-v2))))
+              (mapa-final (substituir-celda coord-src nova-unitat-src mapa-v2)))
 
          (cons (car mapa) mapa-final))))))
 
