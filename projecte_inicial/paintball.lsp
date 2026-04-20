@@ -15,7 +15,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic2.map")
+(setq nombre-mapa "maps/basic1.map")
 (setq MAX-TORNS 1500)
 
 ; bolla (terra g bolla e1 r (r) 3 9 0 (2 1))
@@ -23,36 +23,39 @@
 ; base (terra g base e1 nil 1 (0 1))
 ; terra (terra g (0 0))
 
+; --------------- TESTS ---------------------
+
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
-(setq mapa-test
-  (cons
-    (list 0 200 200 0 0)
-    (iniciar-mapa
-      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
-        ((terra g) (terra r) (terra g) (terra b) (terra r))
-        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
-      0)))
+;(setq mapa-test
+;  (cons
+;    (list 0 200 200 0 0)
+;    (iniciar-mapa
+;      '(((terra r) (terra g base e1) (terra b) (terra r) (terra g))
+;        ((terra g) (terra r) (terra g) (terra b) (terra r))
+;        ((terra b) (terra g) (terra g bolla e2 g (b g) 5 0 0 (2 2)) (terra g) (terra b)))
+;      0)))
+;
+;(setq mapa-amb-bolla
+;  (substituir-celda '(1 1)
+;    '(terra r bolla e1 r (r) 99 0 0 (1 1))
+;    (cdr mapa-test)))
 
-(setq mapa-amb-bolla
-  (substituir-celda '(1 1)
-    '(terra r bolla e1 r (r) 99 0 0 (1 1))
-    (cdr mapa-test)))
-
-(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
-(setq unitat-bolla
-  (list 0 'e1 150 99 'bolla (list 1 1) (list 'b) 'b 0 300 nil))
-(setq unitat-base
-  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
+;(setq mapa-amb-bolla (cons (car mapa-test) mapa-amb-bolla))
+;(setq unitat-bolla
+;  (list 0 'e1 150 99 'bolla (list 1 1) (list 'b) 'b 0 300 nil))
+;(setq unitat-base
+;  (list 0 'e1 200 1 'base (list 1 1) nil nil nil nil nil))
 ;(setq mapa2 (aplicar-mou mapa-amb-bolla (list 1 2) unitat-bolla))
 
-(setq mapa2 (aplicar-crea-bolla mapa-test (list 'b (list 2 1)) unitat-base))
+;(setq mapa2 (aplicar-crea-bolla mapa-test (list 'b (list 2 1)) unitat-base))
 
-(setq unitat-bolla
-  (list 0 'e1 150 33 'bolla (list 2 1) (list 'b) 'b 0 0 nil))
+;(setq unitat-bolla
+;  (list 0 'e1 150 33 'bolla (list 2 1) (list 'b) 'b 0 0 nil))
 
- (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
+; (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
 
+; --------------- TESTS ---------------------()
 
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
 ;; pintura e2, y el mapa
@@ -74,24 +77,20 @@
 )
 
 (defun monitor (mapa)
-    (let* ((unitats (trobar-unitats mapa)))
-        (pinta mapa)
-        (cond
-            ((fi-partida mapa unitats) (mostra-guanyador mapa unitats))
-            (t
-                (let* ((tecla (get-key)))
-                    (cond
-                        ((= tecla 333) (monitor (fer-torn mapa)))
-                        ((= tecla 336) (cls))
-                        (t (monitor mapa))
-                    )
+    (pinta mapa)
+    (cond
+        ((fi-partida-mapa mapa) (mostra-guanyador mapa (trobar-unitats mapa)))
+        (t
+            (let* ((tecla (get-key)))
+                (cond
+                    ((= tecla 333) (monitor (fer-torn mapa)))
+                    ((= tecla 336) (cls))
+                    (t (monitor mapa))
                 )
             )
         )
     )
 )
-
-
 
 (defun fer-torn (mapa)
     (let* ((equip (equip-actual mapa))
@@ -114,8 +113,8 @@
            (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
            
            )
-        ;(ia-action mapa-v2 equip)
-        mapa-v2 ; temporal
+        (ia-action mapa-v2 equip)
+        ;mapa-v2 ; temporal
     )
 )
 
@@ -137,7 +136,7 @@
             (let* ((unitat (car unitats))
                    (accions (cond
                                 ((equal equip 'e1) (agent-agf019 unitat))
-                                (t (agent-agf019_2 unitat))))
+                                (t (agent-agf019 unitat))))
                    (mapa-v2 (aplicar-accions-unitat mapa accions unitat)))
                 
                 (processar-unitats mapa-v2 (cdr unitats) equip)
@@ -248,14 +247,12 @@
                            (estat-dx mapa)
                            (estat-dy mapa)))))
                 (mapa-v2 (cons nou-estat (substituir-celda coord-dst nova-bolla (cdr mapa))))
-                ;; descomenta estas 3 lineas cuando la ia este lista
-                ;(unitat-nova (celda-a-unitat nova-bolla mapa-v2))
-                ;(accions (cond
-                ;    ((equal equip 'e1) (agent-agf019 unitat-nova))
-                ;    (t (agent-agf019_2 unitat-nova))))
-                ;(mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
-                )
-                mapa-v2)))))
+                (unitat-nova (celda-a-unitat nova-bolla mapa-v2))
+                (accions (cond
+                    ((equal equip 'e1) (agent-agf019 unitat-nova))
+                    (t (agent-agf019 unitat-nova))))
+                (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
+                mapa-final))))) ; <-- cuerpo del let*: devuelve mapa-final, paréntesis correctos
 
 (defun aplicar-pinta (mapa args unitat)
   (let* ((coord-dst (coord-real args mapa))
@@ -529,12 +526,28 @@
 ;------------------------------------------------------------------------------------------------
 ; Control fi partida
 
-(defun fi-partida (mapa unitats)
+;; fi-partida-mapa: comprova fi de partida només amb el mapa, sense trobar-unitats
+;; Paràmetres:
+;;   mapa - el mapa actual
+(defun fi-partida-mapa (mapa)
     (cond
-        ((not (te-base (car unitats))) t)   ; base e1 destruida
-        ((not (te-base (cadr unitats))) t)  ; base e2 destruida
         ((>= (torn mapa) MAX-TORNS) t)
+        ((not (te-base-al-mapa (celdas-mapa (cdr mapa)) 'e1)) t)
+        ((not (te-base-al-mapa (celdas-mapa (cdr mapa)) 'e2)) t)
         (t nil)
+    )
+)
+
+;; te-base-al-mapa: comprova si existeix una base d'un equip a la llista de celdas
+;; Paràmetres:
+;;   celdas - llista plana de totes les celdas del mapa
+;;   equip  - 'e1 o 'e2
+(defun te-base-al-mapa (celdas equip)
+    (cond
+        ((null celdas) nil)
+        ((and (equal (celda-tipus (car celdas)) 'base)
+              (equal (celda-equip (car celdas)) equip)) t)
+        (t (te-base-al-mapa (cdr celdas) equip))
     )
 )
 
@@ -572,6 +585,7 @@
                    ; desempat aleatori
                    (t (cond ((= (random 2) 0) 'e1)
                             (t 'e2))))))
+        (princ "Fi de partida, el guanyador es: ")
         (print guanyador)
         guanyador))
 
