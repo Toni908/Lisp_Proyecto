@@ -4,7 +4,12 @@
 ;; Professor: XXX.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
-;; <Descripció de les funcions d'aquest fitxer>
+;; Aquest fitxer conté la lògica principal del joc de paintball:
+;; - Gestió de torns i estat del joc
+;; - Aplicació d'accions de les unitats (moure, pintar, crear bolles)
+;; - Control de cooldowns i condicions de fi de partida
+;; - Càlcul de visió i distàncies
+;; - Construcció de l'estat de les unitats a partir del mapa
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -28,8 +33,8 @@
 ; terra (terra g (0 0))
 
 ; --------------- TESTS ---------------------
-; com vaig fer la IA al final, tenia aquests tests per provar les funcions d’aplicar accions, però ja no em serveixen per a res,
-; els deixo comentats per si de cas són d’algun tipus d’interès per a algú
+; com vaig fer la IA al final, tenia aquests tests per provar les funcions d'aplicar accions, però ja no em serveixen per a res,
+; els deixo comentats per si de cas són d'algun tipus d'interès per a algú
 
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
@@ -63,8 +68,10 @@
 
 ; --------------- TESTS ---------------------()
 
-;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
-;; pintura e2, y el mapa
+;; inici: Funció d'inici del joc
+;; Inicialitza l'estat aleatori, carrega el mapa i inicia el monitor
+;; Paràmetres: cap
+;; Retorna: el resultat de la funció monitor
 (defun inici ()
     (make-random-state t)
     ;(dribble "debug.txt")
@@ -75,7 +82,10 @@
     ;(dribble)
 )
 
-;; funcion de clase
+;; llegeix-exp: Llegeix una expressió d'un fitxer
+;; Paràmetres:
+;;   nom-fitxer - nom del fitxer a llegir
+;; Retorna: l'expressió llegida del fitxer
 (defun llegeix-exp (nom-fitxer)
     (let* ((fp (open nom-fitxer))
     (e (read fp nil nil)))
@@ -83,6 +93,11 @@
     e)
 )
 
+;; monitor: Bucle principal del joc que gestiona l'entrada de l'usuari
+;; Mostra el mapa i espera input de teclat per avançar torns
+;; Paràmetres:
+;;   mapa - l'estat actual del mapa
+;; Retorna: el resultat de mostra-guanyador quan acaba la partida
 (defun monitor (mapa)
     (pinta mapa)
     (cond
@@ -99,6 +114,12 @@
     )
 )
 
+;; fer-torn: Executa un torn complet del joc
+;; Actualitza l'estat de pintura segons els laboratoris, decrementa cooldowns
+;; i crida la IA per executar les accions de l'equip actual
+;; Paràmetres:
+;;   mapa - l'estat actual del mapa
+;; Retorna: el mapa actualitzat després d'executar el torn
 (defun fer-torn (mapa)
     (let* ((equip (equip-actual mapa))
            (labs (comptar-labs mapa))
@@ -125,6 +146,11 @@
     )
 )
 
+;; ia-action: Crida la IA per obtenir i executar les accions de l'equip actual
+;; Paràmetres:
+;;   mapa  - l'estat actual del mapa
+;;   equip - l'equip que juga aquest torn ('e1 o 'e2)
+;; Retorna: el mapa després de processar totes les unitats
 (defun ia-action (mapa equip)
     (let* ((unitats (trobar-unitats mapa))
            (unitats-equip (cond 
@@ -135,7 +161,12 @@
     )
 )
 
-; aplicar todas las acciones pasadas por la ia
+;; processar-unitats: Processa totes les unitats d'un equip, aplicant les seves accions
+;; Paràmetres:
+;;   mapa   - l'estat actual del mapa
+;;   unitats - llista d'unitats de l'equip
+;;   equip  - l'equip actual ('e1 o 'e2)
+;; Retorna: el mapa després d'aplicar totes les accions
 (defun processar-unitats (mapa unitats equip)
     (cond
         ((null unitats) mapa)
@@ -152,6 +183,12 @@
     )
 )
 
+;; aplicar-accions-unitat: Aplica totes les accions d'una unitat al mapa
+;; Paràmetres:
+;;   mapa    - l'estat actual del mapa
+;;   accions - llista d'accions a aplicar
+;;   unitat  - la unitat que executa les accions
+;; Retorna: el mapa després d'aplicar totes les accions
 (defun aplicar-accions-unitat (mapa accions unitat)
     (cond
         ((null accions) mapa)
@@ -172,6 +209,12 @@
 ;----------------------------------------------------------------------------------
 ; Logica de aplicar acciones en una lista
 
+;; aplicar-accio: Aplica una acció específica al mapa
+;; Paràmetres:
+;;   mapa   - l'estat actual del mapa
+;;   accio  - l'acció a aplicar (crea-bolla, pinta o mou)
+;;   unitat - la unitat que executa l'acció
+;; Retorna: el mapa després d'aplicar l'acció
 (defun aplicar-accio (mapa accio unitat)
   (cond
     ((equal (car accio) 'crea-bolla)
@@ -186,33 +229,47 @@
     (t mapa))
 )
 
-; buscar-celda: busca una celda al mapa per coordenada real
-; Paràmetres:
-;   coord  - coordenada real (x y)
-;   celdas - llista plana de totes les celdas
+;; buscar-celda: Busca una cel·la al mapa per coordenada real
+;; Paràmetres:
+;;   coord  - coordenada real (x y)
+;;   celdas - llista plana de totes les cel·les
+;; Retorna: la cel·la trobada o nil si no existeix
 (defun buscar-celda (coord celdas)
     (cond ((null celdas) nil)
           ((equal coord (celda-coord (car celdas))) (car celdas))
           (t (buscar-celda coord (cdr celdas)))))
 
-; substituir-celda-fila: substitueix una celda dins una fila
+;; substituir-celda-fila: Substitueix una cel·la dins una fila
+;; Paràmetres:
+;;   coord      - coordenada de la cel·la a substituir
+;;   nova-celda - la nova cel·la
+;;   fila       - la fila on cercar
+;; Retorna: la fila amb la cel·la substituïda
 (defun substituir-celda-fila (coord nova-celda fila)
     (cond ((null fila) nil)
           ((equal coord (celda-coord (car fila)))
            (cons nova-celda (cdr fila)))
           (t (cons (car fila) (substituir-celda-fila coord nova-celda (cdr fila))))))
 
-; substituir-celda: substitueix una celda al mapa per una nova
+;; substituir-celda: Substitueix una cel·la al mapa per una nova
+;; Paràmetres:
+;;   coord      - coordenada de la cel·la a substituir
+;;   nova-celda - la nova cel·la
+;;   mapa       - el mapa complet
+;; Retorna: el mapa amb la cel·la substituïda
 (defun substituir-celda (coord nova-celda mapa)
     (cond ((null mapa) nil)
           (t (cons (substituir-celda-fila coord nova-celda (car mapa))
                    (substituir-celda coord nova-celda (cdr mapa))))))
 
-; aplicar-crea-bolla: crea una bolla nova al mapa
-; Paràmetres:
-;   mapa   - el mapa
-;   args   - (color coordenada-amb-desplacament)
-;   unitat - la base que crea la bolla (per saber equip i coord)
+;; aplicar-crea-bolla: Crea una bolla nova al mapa
+;; Aplica les validacions necessàries (cost de pintura, distància, ocupació)
+;; i crida recursivament la IA per la nova bolla creada
+;; Paràmetres:
+;;   mapa   - l'estat actual del mapa
+;;   args   - (color coordenada-amb-desplaçament)
+;;   unitat - la base que crea la bolla
+;; Retorna: el mapa amb la nova bolla creada i les seves accions aplicades
 (defun aplicar-crea-bolla (mapa args unitat)
     (let* ((color (car args))
            (coord-dst (coord-real (cadr args) mapa))
@@ -259,8 +316,15 @@
                     ((equal equip 'e1) (agent-agf019 unitat-nova))
                     (t (agent-agf019 unitat-nova))))
                 (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
-                mapa-final))))) ; <-- cuerpo del let*: devuelve mapa-final, paréntesis correctos
+                mapa-final)))))
 
+;; aplicar-pinta: Aplica l'acció de pintar una cel·la
+;; Gestiona els colors pintats, destrucció d'unitats i cooldowns
+;; Paràmetres:
+;;   mapa   - l'estat actual del mapa
+;;   args   - coordenada destí amb desplaçament
+;;   unitat - la bolla que pinta
+;; Retorna: el mapa amb la cel·la pintada i cooldown actualitzat
 (defun aplicar-pinta (mapa args unitat)
   (let* ((coord-dst (coord-real args mapa))
          (coord-src (coord-real (cadr (cddddr unitat)) mapa))
@@ -362,11 +426,13 @@
 
          (cons (car mapa) mapa-final))))))
 
-; aplicar-mou: mou una bolla a una nova casella
-; Paràmetres:
-;   mapa   - el mapa
-;   args   - coordenada destino amb desplaçament (x y)
-;   unitat - la bolla que es mou
+;; aplicar-mou: Mou una bolla a una nova casella
+;; Gestiona els cooldowns segons la distància i el color de la casella
+;; Paràmetres:
+;;   mapa   - l'estat actual del mapa
+;;   args   - coordenada destí amb desplaçament (x y)
+;;   unitat - la bolla que es mou
+;; Retorna: el mapa amb la bolla moguda i cooldown actualitzat
 (defun aplicar-mou (mapa args unitat)
     (let* ((coord-dst (coord-real args mapa))
            (coord-src (coord-real (cadr (cddddr unitat)) mapa))
@@ -414,10 +480,11 @@
 ; ------------------------------------------------------------------
 ; Inici de mapa, metadatos per poder treballar millor
 
-; iniciar-mapa: recorre les files del mapa afegint meta-informació
-; Paràmetres:
-;   mapa - el mapa sense meta-informació
-;   fila - la fila que anam
+;; iniciar-mapa: Recorre les files del mapa afegint meta-informació (coordenades i ids)
+;; Paràmetres:
+;;   mapa - el mapa sense meta-informació
+;;   f    - índex de la fila actual
+;; Retorna: el mapa amb totes les cel·les inicialitzades
 (defun iniciar-mapa (mapa f)
     (cond ((null mapa) nil)
           (t (cons (iniciar-mapa-fila (car mapa) f 0)
@@ -425,11 +492,12 @@
     )
 )
 
-; iniciar-mapa-fila: recorre les cel·les d'una fila afegint meta-informació
-; Paràmetres:
-;   fila - la fila actual
-;   f    - índex de fila
-;   c    - índex de columna
+;; iniciar-mapa-fila: Recorre les cel·les d'una fila afegint meta-informació
+;; Paràmetres:
+;;   fila - la fila actual
+;;   f    - índex de fila
+;;   c    - índex de columna
+;; Retorna: la fila amb totes les cel·les inicialitzades
 (defun iniciar-mapa-fila (fila f c)
     (cond ((null fila) nil)
           (t (cons (iniciar-mapa-celda (car fila) f c)
@@ -437,11 +505,12 @@
     )
 )
 
-; iniciar-mapa-celda: afegeix coordenada a la cel·la, i si és base també id i ()
-; Paràmetres:
-;   celda - la cel·la actual
-;   f     - índex de fila
-;   c     - índex de columna
+;; iniciar-mapa-celda: Afegeix coordenada a la cel·la, i si és base també id i llista buida
+;; Paràmetres:
+;;   celda - la cel·la actual
+;;   f     - índex de fila
+;;   c     - índex de columna
+;; Retorna: la cel·la amb la meta-informació afegida
 (defun iniciar-mapa-celda (celda f c)
     (cond ((pertany 'base celda)
            (append celda (list '() (id-base celda) (list f c))))
@@ -452,7 +521,10 @@
     )
 )
 
-; id-base: retorna 1 si és base e1, 2 si és base e2
+;; id-base: Retorna l'id de la base segons l'equip
+;; Paràmetres:
+;;   celda - la cel·la de la base
+;; Retorna: 1 si és base e1, 2 si és base e2
 (defun id-base (celda)
     (cond ((pertany 'e1 celda) 1)
           (t 2)
@@ -466,16 +538,32 @@
 ; ------------------------------------------------------------------
 ; decrementar cooldowns logica
 
+;; decrementar-cooldowns: Decrementa els cooldowns de totes les unitats de l'equip actual
+;; Paràmetres:
+;;   mapa  - l'estat actual del mapa
+;;   equip - l'equip que està jugant ('e1 o 'e2)
+;; Retorna: el mapa amb els cooldowns decrementats
 (defun decrementar-cooldowns (mapa equip)
   (cons (car mapa) ; mantenemos el estado
         (decrementar-filas (cdr mapa) equip)))
 
+;; decrementar-filas: Decrementa cooldowns de totes les files del mapa
+;; Paràmetres:
+;;   mapa  - les files del mapa
+;;   equip - l'equip actual
+;; Retorna: les files amb cooldowns decrementats
 (defun decrementar-filas (mapa equip)
   (cond
     ((null mapa) nil)
     (t (cons (decrementar-celdas (car mapa) equip)
              (decrementar-filas (cdr mapa) equip)))))
 
+;; decrementar-celdas: Decrementa cooldowns de les cel·les d'una fila
+;; Només afecta les bolles de l'equip actual
+;; Paràmetres:
+;;   fila  - la fila a processar
+;;   equip - l'equip actual
+;; Retorna: la fila amb cooldowns decrementats
 (defun decrementar-celdas (fila equip)
     (cond
         ((null fila) nil)
@@ -507,16 +595,30 @@
 ;-------------------------------------------------------------------------------
 ; cuenta laboratorios del mapa, y devuelve un array de (numero_lab_e1, numero_lab_e2)
 
+;; comptar-labs: Compta els laboratoris de cada equip al mapa
+;; Paràmetres:
+;;   mapa - l'estat actual del mapa
+;; Retorna: llista (labs-e1 labs-e2)
 (defun comptar-labs (mapa)
     (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
 )
 
+;; compta-labs-e: Compta els laboratoris d'un equip específic
+;; Paràmetres:
+;;   mapa - les files del mapa
+;;   x    - l'equip a comptar ('e1 o 'e2)
+;; Retorna: nombre de laboratoris de l'equip
 (defun compta-labs-e (mapa x)
     (cond ((null mapa) 0)
           (t (+ (compta-labs-files (car mapa) x) (compta-labs-e (cdr mapa) x)))
     )    
 )
 
+;; compta-labs-files: Compta els laboratoris d'un equip en una fila
+;; Paràmetres:
+;;   fila - la fila a processar
+;;   x    - l'equip a comptar
+;; Retorna: nombre de laboratoris de l'equip en aquesta fila
 (defun compta-labs-files (fila x)
     (cond ((null fila) 0)
           ((and (equal (caddr (car fila)) 'lab) 
@@ -533,9 +635,11 @@
 ;------------------------------------------------------------------------------------------------
 ; Control fi partida
 
-;; fi-partida-mapa: comprova fi de partida només amb el mapa, sense trobar-unitats
+;; fi-partida-mapa: Comprova si la partida ha acabat
+;; Condicions: màxim de torns assolit o alguna base destruïda
 ;; Paràmetres:
-;;   mapa - el mapa actual
+;;   mapa - l'estat actual del mapa
+;; Retorna: t si la partida ha acabat, nil altrament
 (defun fi-partida-mapa (mapa)
     (cond
         ((>= (torn mapa) MAX-TORNS) t)
@@ -545,10 +649,11 @@
     )
 )
 
-;; te-base-al-mapa: comprova si existeix una base d'un equip a la llista de celdas
+;; te-base-al-mapa: Comprova si existeix una base d'un equip al mapa
 ;; Paràmetres:
-;;   celdas - llista plana de totes les celdas del mapa
-;;   equip  - 'e1 o 'e2
+;;   celdas - llista plana de totes les cel·les del mapa
+;;   equip  - l'equip a comprovar ('e1 o 'e2)
+;; Retorna: t si existeix la base, nil altrament
 (defun te-base-al-mapa (celdas equip)
     (cond
         ((null celdas) nil)
@@ -558,19 +663,21 @@
     )
 )
 
-; te-base: comprova si una llista d'unitats té una base
-; Paràmetres:
-;   unitats-equip - llista d'unitats d'un equip 
+;; te-base: Comprova si una llista d'unitats té una base
+;; Paràmetres:
+;;   unitats-equip - llista d'unitats d'un equip
+;; Retorna: t si hi ha una base, nil altrament
 (defun te-base (unitats-equip)
     (cond ((null unitats-equip) nil)
-          ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
-          (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
+          ((equal (car (cddddr (car unitats-equip))) 'base) t)
+          (t (te-base (cdr unitats-equip)))))
 
-
-; mostra-guanyador: determina i mostra el guanyador
-; Paràmetres:
-;   mapa    - el mapa
-;   unitats - ((unitats-e1) (unitats-e2))
+;; mostra-guanyador: Determina i mostra el guanyador de la partida
+;; Criteris: base destruïda > nombre de bolles > quantitat de pintura > aleatori
+;; Paràmetres:
+;;   mapa    - l'estat actual del mapa
+;;   unitats - llista ((unitats-e1) (unitats-e2))
+;; Retorna: 'e1 o 'e2 segons qui guanyi
 (defun mostra-guanyador (mapa unitats)
     (let* ((te-base-e1 (te-base (car unitats)))
            (te-base-e2 (te-base (cadr unitats)))
@@ -596,9 +703,10 @@
         (print guanyador)
         guanyador))
 
-; compta-bolles: compta les bolles vives d'un equip
-; Paràmetres:
-;   unitats-equip - llista d'unitats d'un equip
+;; compta-bolles: Compta les bolles vives d'un equip
+;; Paràmetres:
+;;   unitats-equip - llista d'unitats d'un equip
+;; Retorna: nombre de bolles de l'equip
 (defun compta-bolles (unitats-equip)
     (cond ((null unitats-equip) 0)
           ((equal (car (cddddr (car unitats-equip))) 'bolla)
@@ -612,7 +720,12 @@
 ;------------------------------------------------------------------------------------------------   
 ; funcions per construir l'array esta a partir del mapa
 
-; trobar-unitats-llista: filtra les celdas que son unitats
+;; trobar-unitats-llista: Filtra les cel·les que són unitats d'un equip específic
+;; Paràmetres:
+;;   celdas - llista plana de cel·les
+;;   mapa   - el mapa complet
+;;   equip  - l'equip a filtrar ('e1 o 'e2)
+;; Retorna: llista d'unitats de l'equip
 (defun trobar-unitats-llista (celdas mapa equip)
     (cond ((null celdas) nil)
           ((and (es-unitat (car celdas))
@@ -621,64 +734,82 @@
                  (trobar-unitats-llista (cdr celdas) mapa equip)))
           (t (trobar-unitats-llista (cdr celdas) mapa equip))))
 
-; es-unitat: comprova si una celda té una unitat (base o bolla)
+;; es-unitat: Comprova si una cel·la conté una unitat (base o bolla)
+;; Paràmetres:
+;;   celda - la cel·la a comprovar
+;; Retorna: t si és una unitat, nil altrament
 (defun es-unitat (celda)
     (cond ((pertany 'base celda) t)
           ((pertany 'bolla celda) t)
           (t nil)))
 
-
-; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
+;; trobar-unitats: Retorna totes les unitats del mapa separades per equip
+;; Paràmetres:
+;;   mapa - l'estat actual del mapa
+;; Retorna: llista ((unitats-e1) (unitats-e2))
 (defun trobar-unitats (mapa)
     (let* ((celdas (celdas-mapa (cdr mapa))))
         (list
             (trobar-unitats-llista celdas mapa 'e1)
             (trobar-unitats-llista celdas mapa 'e2))))
 
-; celdas-mapa: podria llamarlo aplanar mapa, ya que me lo aplana todo en una lista para poder buscar mas facilmente
+;; celdas-mapa: Aplana el mapa en una llista de cel·les per facilitar cerques
+;; Paràmetres:
+;;   mapa - les files del mapa
+;; Retorna: llista plana de totes les cel·les
 (defun celdas-mapa (mapa)
     (cond ((null mapa) nil)
           (t (append (car mapa) (celdas-mapa (cdr mapa))))
     )
 )
 
-; celda-a-unitat: construeix la llista d'info d'una unitat a partir de la celda i l'estat
+;; celda-a-unitat: Construeix l'estructura de dades d'una unitat a partir de la cel·la
+;; Format: (ronda equip pintura id tipus-unitat coord colors-pintat color-propi tr-pintar tr-moure visio)
+;; Paràmetres:
+;;   celda - la cel·la amb la unitat
+;;   mapa  - l'estat actual del mapa
+;; Retorna: llista amb tota la informació de la unitat
 (defun celda-a-unitat (celda mapa)
-    (let* ((tipus (celda-tipus celda))                              ; agafa el tipus: 'base o 'bolla
-           (equip (celda-equip celda))                              ; agafa l'equip: 'e1 o 'e2
-           (pintura (cond ((equal equip 'e1) (cadr (car mapa)))     ; pintura e1 del estat
-                          (t (caddr (car mapa)))))                  ; pintura e2 del estat
-           (base (equal tipus 'base)))                              ; boolea: es base o no?
+    (let* ((tipus (celda-tipus celda))
+           (equip (celda-equip celda))
+           (pintura (cond ((equal equip 'e1) (cadr (car mapa)))
+                          (t (caddr (car mapa)))))
+           (base (equal tipus 'base)))
         (list
-            (car (car mapa))                                        ; 1. ronda - del estat
+            (car (car mapa))                                        ; 1. ronda
             equip                                                   ; 2. equip
-            pintura                                                 ; 3. pintura - del estat segons equip
-            (cond (base (celda-id-base celda))                      ; 4. id - pos 6 si base
-                  (t (celda-id-bolla celda)))                       ;       pos 7 si bolla
+            pintura                                                 ; 3. pintura
+            (cond (base (celda-id-base celda))                      ; 4. id
+                  (t (celda-id-bolla celda)))
             tipus                                                   ; 5. tipus-unitat
-            (cond (base (coord-amb-desplacament (celda-coord-base celda) mapa))
+            (cond (base (coord-amb-desplacament (celda-coord-base celda) mapa))  ; 6. coord
                   (t (coord-amb-desplacament (celda-coord-bolla celda) mapa)))
-            (cond (base (celda-colors-pintat-base celda))           ; 7. colors-pintat - pos 5 si base
-                  (t (celda-colors-pintat-bolla celda)))            ;                   pos 6 si bolla
-            (cond (base nil)                                        ; 8. color-propi - nil si base
-                  (t (celda-color-propi-bolla celda)));               pos 5 si bolla
-            (cond (base nil)                                        ; 9. tr-pintar - nil si base
-                  (t (celda-tr-pintar-bolla celda)))                ;              pos 8 si bolla
-            (cond (base nil)                                        ; 10. tr-moure - nil si base
-                  (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
-            (calcular-visio (celda-coord celda) tipus mapa))))      ; 11. visio 
+            (cond (base (celda-colors-pintat-base celda))           ; 7. colors-pintat
+                  (t (celda-colors-pintat-bolla celda)))
+            (cond (base nil)                                        ; 8. color-propi
+                  (t (celda-color-propi-bolla celda)))
+            (cond (base nil)                                        ; 9. tr-pintar
+                  (t (celda-tr-pintar-bolla celda)))
+            (cond (base nil)                                        ; 10. tr-moure
+                  (t (celda-tr-moure-bolla celda)))
+            (calcular-visio (celda-coord celda) tipus mapa))))      ; 11. visio
 
+;; celda-a-visio: Converteix una cel·la a l'estructura de visió per la IA
+;; Paràmetres:
+;;   celda - la cel·la a convertir
+;;   mapa  - l'estat actual del mapa
+;; Retorna: llista amb la informació visible de la cel·la
 (defun celda-a-visio (celda mapa)
     (let* ((tipus (car celda)))
         (cond
-            ; Agua: solo coordenada y tipo
+            ; Aigua: només coordenada i tipus
             ((equal tipus 'aigua)
              (list (coord-amb-desplacament (celda-coord celda) mapa) 'aigua))
             ; Terra
             (t (let* ((color (cadr celda))
                       (element (caddr celda)))
                 (cond
-                    ; Terra buida: el tercer element es una llista (la coordenada)
+                    ; Terra buida
                     ((listp element)
                      (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color))
                     ; Terra amb lab
@@ -697,11 +828,12 @@
                            (celda-tr-pintar-bolla celda)
                            (celda-tr-moure-bolla celda)))))))))
 
-; calcular-visio: retorna la llista de celdas visibles per una unitat
-; Paràmetres:
-;   coord-real - coordenada real (x y) de la unitat al mapa
-;   tipus      - 'base o 'bolla
-;   mapa       - el mapa
+;; calcular-visio: Calcula totes les cel·les visibles per una unitat
+;; Paràmetres:
+;;   coord-real - coordenada real (x y) de la unitat al mapa
+;;   tipus      - 'base o 'bolla
+;;   mapa       - l'estat actual del mapa
+;; Retorna: llista de cel·les visibles en format de visió
 (defun calcular-visio (coord-real tipus mapa)
     (let* ((rang (cond ((equal tipus 'base) 64)
                        (t 20)))
@@ -709,21 +841,23 @@
            (celdas-visibles (celdas-en-rang coord-real rang celdas)))
         (mapcar (lambda (c) (celda-a-visio c mapa)) celdas-visibles)))
 
-; celdas-en-rang: retorna totes les celdas del mapa dins del rang d'una coordenada
-; Paràmetres:
-;   coord  - coordenada real (x y) de la unitat
-;   rang   - rang màxim de visió (20 per bolla, 64 per base)
-;   celdas - llista plana de totes les celdas del mapa
+;; celdas-en-rang: Retorna totes les cel·les dins del rang de visió
+;; Paràmetres:
+;;   coord  - coordenada real (x y) de la unitat
+;;   rang   - rang màxim de visió (20 per bolla, 64 per base)
+;;   celdas - llista plana de totes les cel·les del mapa
+;; Retorna: llista de cel·les dins del rang
 (defun celdas-en-rang (coord rang celdas)
     (cond ((null celdas) nil)
           ((<= (d2 coord (celda-coord (car celdas))) rang)
            (cons (car celdas) (celdas-en-rang coord rang (cdr celdas))))
           (t (celdas-en-rang coord rang (cdr celdas)))))
 
-; d2: calcula la distancia euclidiana al quadrat entre dos coordenades
-; Paràmetres:
-;   coord-a - llista (x y)
-;   coord-b - llista (x y)
+;; d2: Calcula la distància euclidiana al quadrat entre dues coordenades
+;; Paràmetres:
+;;   coord-a - llista (x y)
+;;   coord-b - llista (x y)
+;; Retorna: distància^2
 (defun d2 (coord-a coord-b)
     (+ (* (- (car coord-a) (car coord-b)) (- (car coord-a) (car coord-b)))
        (* (- (cadr coord-a) (cadr coord-b)) (- (cadr coord-a) (cadr coord-b)))))
@@ -735,14 +869,22 @@
 ;----------------------------------------------------------------------------------------
 ;Per treballar amb el desplazament
 
-; coord-amb-desplacament: suma dx dy a una coordenada
+;; coord-amb-desplacament: Suma el desplaçament global (dx, dy) a una coordenada
+;; Paràmetres:
+;;   coord - coordenada real (x y)
+;;   mapa  - l'estat actual del mapa
+;; Retorna: coordenada amb desplaçament (x+dx, y+dy)
 (defun coord-amb-desplacament (coord mapa)
     (list (+ (car coord) (estat-dx mapa))
           (+ (cadr coord) (estat-dy mapa))
     )
 )
 
-; coord-real: resta dx dy a una coordenada
+;; coord-real: Resta el desplaçament global (dx, dy) d'una coordenada
+;; Paràmetres:
+;;   coord - coordenada amb desplaçament (x y)
+;;   mapa  - l'estat actual del mapa
+;; Retorna: coordenada real (x-dx, y-dy)
 (defun coord-real (coord mapa)
     (list (- (car coord) (estat-dx mapa))
           (- (cadr coord) (estat-dy mapa))
@@ -754,8 +896,9 @@
 
 
 ;-----------------------------------------------------------------------------------------
-; funcions per agafar x-element del mapa, ya que cada unitat les te a llocs diferents
-; tambe funcions que se utilitzen un poc per tot
+; Funcions accessores per obtenir elements específics del mapa i les cel·les
+; Aquestes funcions simplifica l'accés als diferents camps de l'estructura de dades
+
 
 (defun estat-torn (mapa) (car (car mapa)))
 (defun estat-pintura-e1 (mapa) (cadr (car mapa)))
@@ -771,24 +914,17 @@
 (defun celda-id-bolla (celda) (caddr (cddr (cddr celda))))
 (defun celda-tr-pintar-bolla (celda) (cadddr (cddr (cddr celda))))
 (defun celda-tr-moure-bolla (celda) (car (cddddr (cddr (cddr celda)))))
-(defun celda-coord-base (celda) (caddr (cddr (cddr celda)))) ;; realment podria sustituir aquestes dues per celda-coord, ya que el vaig cambiar per a sempre estar al final la coordenada en el mapa nostre
+(defun celda-coord-base (celda) (caddr (cddr (cddr celda))))
 (defun celda-coord-bolla (celda) (cadr (cddddr (cddr (cddr celda)))))
 (defun celda-coord (celda) (car (reverse celda)))
-(defun get-equip-celda (celda) (cadddr celda)) ; get-equip-celda: retorna l'equip de la celda
-(defun torn (mapa) (car (car mapa))) ;; retorna el torn de la partida
+(defun get-equip-celda (celda) (cadddr celda))
+(defun torn (mapa) (car (car mapa)))
+(defun equip-actual (mapa) (cond ((= (mod (torn mapa) 2) 0) 'e2) (t 'e1)))
 
-(defun equip-actual (mapa)
-  (cond 
-    ((= (mod (torn mapa) 2) 0) 'e2)
-    (t 'e1)
-  )
-)
-
-; pertany: comprova si x pertany a la llista l, funcion de clase
+;; funcio de clase
 (defun pertany (x l)
     (cond ((null l) nil)
           ((equal x (car l)) t)
           (t (pertany x (cdr l)))))
 
 ;-----------------------------------------------------------------------------------------
-
