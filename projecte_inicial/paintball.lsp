@@ -15,7 +15,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic1.map")
+(setq nombre-mapa "maps/basic2.map")
 (setq MAX-TORNS 1500)
 (setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
@@ -661,7 +661,7 @@
                   (t (celda-tr-pintar-bolla celda)))                ;              pos 8 si bolla
             (cond (base nil)                                        ; 10. tr-moure - nil si base
                   (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
-            (calcular-visio (celda-coord celda) tipus mapa))))                                                  ; 11. visio - nil de moment
+            (calcular-visio (celda-coord celda) tipus mapa))))      ; 11. visio 
 
 (defun celda-a-visio (celda mapa)
     (let* ((tipus (car celda)))
