@@ -19,12 +19,17 @@
 (setq MAX-TORNS 1500)
 (setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
+; --------------- MAPA DE REFERENCIA ---------------------
+; aixi es como formateig el mapa a partir del fitxer.
+
 ; bolla (terra g bolla e1 r (r) 3 9 0 (2 1))
 ; lab (terra b lab e1 nil (2 2))
 ; base (terra g base e1 nil 1 (0 1))
 ; terra (terra g (0 0))
 
 ; --------------- TESTS ---------------------
+; com vaig fer la IA al final, tenia aquests tests per provar les funcions d’aplicar accions, però ja no em serveixen per a res,
+; els deixo comentats per si de cas són d’algun tipus d’interès per a algú
 
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
@@ -778,7 +783,6 @@
     (t 'e1)
   )
 )
-
 
 ; pertany: comprova si x pertany a la llista l, funcion de clase
 (defun pertany (x l)
