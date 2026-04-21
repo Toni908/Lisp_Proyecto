@@ -20,7 +20,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic2.map")
+(setq nombre-mapa "maps/basic1.map")
 (setq MAX-TORNS 1500)
 (setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
@@ -66,14 +66,11 @@
 
 ; (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
 
-; --------------- TESTS ---------------------()
+; --------------- TESTS ---------------------
 
 ;; inici: Funció d'inici del joc
-;; Inicialitza l'estat aleatori, carrega el mapa i inicia el monitor
 ;; Paràmetres: cap
-;; Retorna: el resultat de la funció monitor
 (defun inici ()
-    (make-random-state t)
     ;(dribble "debug.txt")
     ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
     (monitor (cons (list 0 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
@@ -82,7 +79,7 @@
     ;(dribble)
 )
 
-;; llegeix-exp: Llegeix una expressió d'un fitxer
+;; llegeix-exp: Llegeix el mapa d'un fitxer asignat en el setq nombre-mapa
 ;; Paràmetres:
 ;;   nom-fitxer - nom del fitxer a llegir
 ;; Retorna: l'expressió llegida del fitxer
