@@ -419,7 +419,7 @@
 )
 
 ;; agent-agf019-accions-moviment-normal: moviment autònom sense objectiu clar
-;; La bolla es mou en una direcció determinada per la seva id i ronda.
+;; La bolla es mou en una direcció ALEATÒRIA.
 ;; Pinta el sòl de destí si no és del seu color (per evitar penalització).
 ;; Paràmetres:
 ;;   coord       - coordenada actual de la bolla
@@ -430,7 +430,7 @@
 ;;   ronda       - ronda actual
 ;;   visio       - caselles visibles
 (defun agent-agf019-accions-moviment-normal (coord color-propi tr-pintar tr-moure id ronda visio)
-    (let* ((dir       (agent-agf019-direccio-bolla id ronda))
+    (let* ((dir       (agent-agf019-direccio-aleatoria))  ; ← CANVI: direcció aleatòria
            (dest      (agent-agf019-aplica-direccio coord dir))
            (cas-dest  (agent-agf019-buscar-casella dest visio))
            (pot-moure (< tr-moure 100))
@@ -438,15 +438,15 @@
         (cond
             ((not pot-moure) nil)
             ((null cas-dest)
-             ;; El destí no és visible (fora de rang o no existeix): gira 180 graus
-             (let* ((dir2  (agent-agf019-girar-180 dir))
+             ;; El destí no és visible: prova altra direcció aleatòria
+             (let* ((dir2  (agent-agf019-direccio-aleatoria))
                     (dest2 (agent-agf019-aplica-direccio coord dir2))
                     (cas2  (agent-agf019-buscar-casella dest2 visio)))
                  (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
              ))
             ((not (null (agent-agf019-cas-tipus-element cas-dest)))
-             ;; El destí té un element (ocupat): gira 90 graus
-             (let* ((dir2  (agent-agf019-girar-90 dir))
+             ;; El destí està ocupat: prova altra direcció aleatòria
+             (let* ((dir2  (agent-agf019-direccio-aleatoria))
                     (dest2 (agent-agf019-aplica-direccio coord dir2))
                     (cas2  (agent-agf019-buscar-casella dest2 visio)))
                  (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
@@ -454,6 +454,23 @@
             (t
              (agent-agf019-generar-moviment coord dest cas-dest color-propi pot-pintar)
             )
+        )
+    )
+)
+
+;; agent-agf019-direccio-aleatoria: retorna una direcció completament aleatòria
+;; Retorna un vector (dx dy) entre els 8 possibles
+(defun agent-agf019-direccio-aleatoria ()
+    (let* ((n (random 8)))
+        (cond
+            ((= n 0) (list  1  0))
+            ((= n 1) (list  1  1))
+            ((= n 2) (list  0  1))
+            ((= n 3) (list -1  1))
+            ((= n 4) (list -1  0))
+            ((= n 5) (list -1 -1))
+            ((= n 6) (list  0 -1))
+            (t       (list  1 -1))
         )
     )
 )
@@ -480,26 +497,6 @@
                     (t (list (list 'mou dest)))
                 )
             )
-        )
-    )
-)
-
-;; agent-agf019-direccio-bolla: tria una direcció per a la bolla basant-se en id i ronda
-;; Retorna un vector (dx dy) entre els 8 possibles
-;; Paràmetres:
-;;   id    - id de la bolla
-;;   ronda - ronda actual
-(defun agent-agf019-direccio-bolla (id ronda)
-    (let* ((n (mod (+ id (mod ronda 100)) 8)))
-        (cond
-            ((= n 0) (list  1  0))
-            ((= n 1) (list  1  1))
-            ((= n 2) (list  0  1))
-            ((= n 3) (list -1  1))
-            ((= n 4) (list -1  0))
-            ((= n 5) (list -1 -1))
-            ((= n 6) (list  0 -1))
-            (t       (list  1 -1))
         )
     )
 )

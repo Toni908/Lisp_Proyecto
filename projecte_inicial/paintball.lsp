@@ -17,6 +17,7 @@
 
 (setq nombre-mapa "maps/basic1.map")
 (setq MAX-TORNS 1500)
+(setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
 ; bolla (terra g bolla e1 r (r) 3 9 0 (2 1))
 ; lab (terra b lab e1 nil (2 2))
@@ -60,6 +61,7 @@
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
 ;; pintura e2, y el mapa
 (defun inici ()
+    (make-random-state t)
     ;(dribble "debug.txt")
     ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
     (monitor (cons (list 0 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
