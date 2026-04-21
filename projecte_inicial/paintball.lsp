@@ -17,7 +17,6 @@
 
 (setq nombre-mapa "maps/basic1.map")
 (setq MAX-TORNS 1500)
-(setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
 ; bolla (terra g bolla e1 r (r) 3 9 0 (2 1))
 ; lab (terra b lab e1 nil (2 2))
@@ -78,15 +77,19 @@
     e)
 )
 
-(defun monitor (mapa)
-    (pinta mapa)
+(defun monitor (mapa &optional (counter 0))
+    (cond ((= counter 0) (pinta mapa))
+          (t ))
     (cond
         ((fi-partida-mapa mapa) (mostra-guanyador mapa (trobar-unitats mapa)))
+        ((> counter 0) (monitor (fer-torn mapa) (- counter 1)))
         (t
             (let* ((tecla (get-key)))
                 (cond
-                    ((= tecla 333) (monitor (fer-torn mapa)))
-                    ((= tecla 336) (cls))
+                    ((= tecla 328) (monitor (fer-torn mapa) 9)) ; tecla arriba
+                    ((= tecla 331) (monitor (fer-torn mapa) 99)) ; tecla izquierda
+                    ((= tecla 333) (monitor (fer-torn mapa) )) ; tecla derecha
+                    ((= tecla 336) (cls)) ; tecla abajo
                     (t (monitor mapa))
                 )
             )

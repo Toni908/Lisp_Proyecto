@@ -404,7 +404,7 @@
             (pot-moure
              (cond
                  ((and (not (null dest-mov)) (not (null cas-dest))
-                       (null (agent-agf019-cas-tipus-element cas-dest)))
+                       (agent-agf019-cas-lliure cas-dest))
                   (cond
                       ((and pot-pintar (not (equal color-dest color-propi))
                             (<= (agent-agf019-d2 coord dest-mov) 5))
@@ -429,31 +429,39 @@
 ;;   id          - id de la bolla
 ;;   ronda       - ronda actual
 ;;   visio       - caselles visibles
-(defun agent-agf019-accions-moviment-normal (coord color-propi tr-pintar tr-moure id ronda visio)
-    (let* ((dir       (agent-agf019-direccio-aleatoria))  ; ← CANVI: direcció aleatòria
-           (dest      (agent-agf019-aplica-direccio coord dir))
-           (cas-dest  (agent-agf019-buscar-casella dest visio))
-           (pot-moure (< tr-moure 100))
-           (pot-pintar (< tr-pintar 1)))
+(defun agent-agf019-accions-vers-objectiu (coord objectiu color-propi tr-pintar tr-moure visio)
+    (let* ((dist (agent-agf019-d2 coord objectiu))
+           (pot-pintar (< tr-pintar 1))
+           (pot-moure  (< tr-moure 100))
+           (dest-mov   (agent-agf019-pas-cap-a coord objectiu))
+           (cas-dest   (agent-agf019-buscar-casella dest-mov visio))
+           (color-dest (cond ((null cas-dest) nil)
+                             (t (agent-agf019-cas-color-casella cas-dest)))))
+
         (cond
-            ((not pot-moure) nil)
-            ((null cas-dest)
-             ;; El destí no és visible: prova altra direcció aleatòria
-             (let* ((dir2  (agent-agf019-direccio-aleatoria))
-                    (dest2 (agent-agf019-aplica-direccio coord dir2))
-                    (cas2  (agent-agf019-buscar-casella dest2 visio)))
-                 (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
-             ))
-            ((not (null (agent-agf019-cas-tipus-element cas-dest)))
-             ;; El destí està ocupat: prova altra direcció aleatòria
-             (let* ((dir2  (agent-agf019-direccio-aleatoria))
-                    (dest2 (agent-agf019-aplica-direccio coord dir2))
-                    (cas2  (agent-agf019-buscar-casella dest2 visio)))
-                 (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
-             ))
-            (t
-             (agent-agf019-generar-moviment coord dest cas-dest color-propi pot-pintar)
-            )
+            ((and (<= dist 5) pot-pintar)
+             (cond
+                 ((and pot-moure (agent-agf019-cas-lliure cas-dest))
+                  (cond
+                      ((and (not (equal color-dest color-propi)))
+                       (list (list 'pinta objectiu)
+                             (list 'pinta dest-mov)
+                             (list 'mou dest-mov)))
+                      (t
+                       (list (list 'pinta objectiu)
+                             (list 'mou dest-mov)))))
+                 (t (list (list 'pinta objectiu)))))
+
+            (pot-moure
+             (cond
+                 ((agent-agf019-cas-lliure cas-dest)
+                  (cond
+                      ((and pot-pintar (not (equal color-dest color-propi))
+                            (<= (agent-agf019-d2 coord dest-mov) 5))
+                       (list (list 'pinta dest-mov) (list 'mou dest-mov)))
+                      (t (list (list 'mou dest-mov)))))
+                 (t nil)))
+            (t nil)
         )
     )
 )
@@ -486,7 +494,8 @@
 (defun agent-agf019-generar-moviment (coord dest cas-dest color-propi pot-pintar)
     (cond
         ((null cas-dest) nil)
-        ((not (null (agent-agf019-cas-tipus-element cas-dest))) nil)
+        ((not (agent-agf019-cas-lliure cas-dest)) nil)
+
         (t
             (let* ((color-sol (agent-agf019-cas-color-casella cas-dest))
                    (cal-pintar-sol (and pot-pintar
@@ -500,6 +509,11 @@
         )
     )
 )
+
+(defun agent-agf019-cas-lliure (cas)
+  (and cas
+       (equal (agent-agf019-cas-tipus-casella cas) 'terra)
+       (null (agent-agf019-cas-tipus-element cas))))
 
 ;; agent-agf019-aplica-direccio: suma una direcció a una coordenada
 ;; Paràmetres:

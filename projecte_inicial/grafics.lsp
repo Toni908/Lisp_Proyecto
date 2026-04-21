@@ -26,7 +26,7 @@
     (print (caddr (car mapa)))
     
     ; Mapa
-    (imprimir-files (cdr mapa) 0 10)
+    (imprimir-files (cdr mapa) 0 6)
     (color 0 0 0)
 )
 
