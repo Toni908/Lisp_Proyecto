@@ -35,6 +35,7 @@
 ;;   Casella base:   (coord 'terra color 'base equip colors-pintat nil nil nil)
 ;;   Casella bolla:  (coord 'terra color 'bolla equip colors-pintat color-propi tr-pintar tr-moure)
 
+(setq rs (make-random-state t)) ;; Inicialització de l'estat aleatori
 
 ;; ============================================================
 ;; PUNT D'ENTRADA PRINCIPAL
@@ -161,7 +162,7 @@
 ;;   ronda - el torn actual
 ;;   id    - l'id de la base
 (defun agent-agf019-color-seguent (ronda id)
-    (let* ((n (mod (+ ronda id) 3)))
+    (let* ((n (random 3 rs)))
         (cond ((= n 0) 'r)
               ((= n 1) 'g)
               (t 'b))))
@@ -183,7 +184,7 @@
            (id       (agent-agf019-id dades))
            (visio    (agent-agf019-visio dades))
            (color    (agent-agf019-color-seguent ronda id))
-           (dest     (agent-agf019-base-cerca-casella-lliure coord visio)))
+           (dest     (agent-agf019-cercar-lliure coord visio)))
         (cond
             ((< pintura 50) nil)
             ((null dest) nil)
@@ -191,20 +192,6 @@
         )
     )
 )
-
-;; agent-agf019-base-cerca-casella-lliure: cerca la casella adjacent lliure més propera a la base
-;; Paràmetres:
-;;   coord - coordenada de la base
-;;   visio - llista de caselles visibles
-(defun agent-agf019-base-cerca-casella-lliure (coord visio)
-    (agent-agf019-millor-adjacent coord visio))
-
-;; agent-agf019-millor-adjacent: retorna la coordenada adjacent lliure (d2<=2) més propera
-;; Paràmetres:
-;;   coord - coordenada origen
-;;   visio - caselles visibles
-(defun agent-agf019-millor-adjacent (coord visio)
-    (agent-agf019-cercar-lliure coord visio))
 
 ;; agent-agf019-cercar-lliure: itera la visió buscant una casella adjacent lliure
 ;; Paràmetres:
@@ -389,7 +376,8 @@
              (cond
                  ;; Si a més podem moure, pintem + movem
                  ((and pot-moure (not (null dest-mov)) (not (null cas-dest))
-                       (null (agent-agf019-cas-tipus-element cas-dest)))
+                    (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)
+                    (null (agent-agf019-cas-tipus-element cas-dest)))
                   (cond
                       ;; El sòl destí no és del nostre color: pintem el sòl primer
                       ((and (not (equal color-dest color-propi))
@@ -403,8 +391,9 @@
             ;; Fora de rang: ens movem cap a l'objectiu (pintant el sòl si cal)
             (pot-moure
              (cond
-                 ((and (not (null dest-mov)) (not (null cas-dest))
-                       (null (agent-agf019-cas-tipus-element cas-dest)))
+                 ((and  (not (null dest-mov)) (not (null cas-dest))
+                        (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)  
+                        (null (agent-agf019-cas-tipus-element cas-dest)))
                   (cond
                       ((and pot-pintar (not (equal color-dest color-propi))
                             (<= (agent-agf019-d2 coord dest-mov) 5))
@@ -418,59 +407,47 @@
     )
 )
 
-;; agent-agf019-accions-moviment-normal: moviment autònom sense objectiu clar
-;; La bolla es mou en una direcció ALEATÒRIA.
-;; Pinta el sòl de destí si no és del seu color (per evitar penalització).
-;; Paràmetres:
-;;   coord       - coordenada actual de la bolla
-;;   color-propi - color propi de la bolla
-;;   tr-pintar   - temps de recuperació de pintar
-;;   tr-moure    - temps de recuperació de moure
-;;   id          - id de la bolla
-;;   ronda       - ronda actual
-;;   visio       - caselles visibles
+;; agent-agf019-totes-direccions: retorna les 8 direccions starting from a random offset
+(defun agent-agf019-totes-direccions ()
+    (let* ((offset (random 8 rs)))
+        (agent-agf019-rotar-llista offset
+            (list
+                (list  1  0) (list  1  1) (list  0  1) (list -1  1)
+                (list -1  0) (list -1 -1) (list  0 -1) (list  1 -1)))))
+
+;; agent-agf019-rotar-llista: rota una llista n posicions cap a l'esquerra
+(defun agent-agf019-rotar-llista (n l)
+    (cond ((= n 0) l)
+          (t (agent-agf019-rotar-llista
+                (- n 1)
+                (append (cdr l) (list (car l)))))))
+
+;; agent-agf019-accions-moviment-normal: prova les 8 direccions sistemàticament
+;; començant per una aleatòria
 (defun agent-agf019-accions-moviment-normal (coord color-propi tr-pintar tr-moure id ronda visio)
-    (let* ((dir       (agent-agf019-direccio-aleatoria))  ; ← CANVI: direcció aleatòria
-           (dest      (agent-agf019-aplica-direccio coord dir))
-           (cas-dest  (agent-agf019-buscar-casella dest visio))
-           (pot-moure (< tr-moure 100))
-           (pot-pintar (< tr-pintar 1)))
+    (let* ((pot-moure  (< tr-moure 100))
+           (pot-pintar (< tr-pintar 1))
+           (dirs       (agent-agf019-totes-direccions)))
         (cond
             ((not pot-moure) nil)
-            ((null cas-dest)
-             ;; El destí no és visible: prova altra direcció aleatòria
-             (let* ((dir2  (agent-agf019-direccio-aleatoria))
-                    (dest2 (agent-agf019-aplica-direccio coord dir2))
-                    (cas2  (agent-agf019-buscar-casella dest2 visio)))
-                 (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
-             ))
-            ((not (null (agent-agf019-cas-tipus-element cas-dest)))
-             ;; El destí està ocupat: prova altra direcció aleatòria
-             (let* ((dir2  (agent-agf019-direccio-aleatoria))
-                    (dest2 (agent-agf019-aplica-direccio coord dir2))
-                    (cas2  (agent-agf019-buscar-casella dest2 visio)))
-                 (agent-agf019-generar-moviment coord dest2 cas2 color-propi pot-pintar)
-             ))
-            (t
-             (agent-agf019-generar-moviment coord dest cas-dest color-propi pot-pintar)
-            )
+            (t (agent-agf019-prova-direccions coord dirs color-propi pot-pintar visio))
         )
     )
 )
 
-;; agent-agf019-direccio-aleatoria: retorna una direcció completament aleatòria
-;; Retorna un vector (dx dy) entre els 8 possibles
-(defun agent-agf019-direccio-aleatoria ()
-    (let* ((n (random 8)))
-        (cond
-            ((= n 0) (list  1  0))
-            ((= n 1) (list  1  1))
-            ((= n 2) (list  0  1))
-            ((= n 3) (list -1  1))
-            ((= n 4) (list -1  0))
-            ((= n 5) (list -1 -1))
-            ((= n 6) (list  0 -1))
-            (t       (list  1 -1))
+;; agent-agf019-prova-direccions: itera les direccions fins trobar una casella vàlida
+(defun agent-agf019-prova-direccions (coord dirs color-propi pot-pintar visio)
+    (cond
+        ((null dirs) nil)
+        (t
+            (let* ((dest     (agent-agf019-aplica-direccio coord (car dirs)))
+                   (cas-dest (agent-agf019-buscar-casella dest visio))
+                   (resultat (agent-agf019-generar-moviment coord dest cas-dest color-propi pot-pintar)))
+                (cond
+                    ((not (null resultat)) resultat)
+                    (t (agent-agf019-prova-direccions coord (cdr dirs) color-propi pot-pintar visio))
+                )
+            )
         )
     )
 )
@@ -486,6 +463,7 @@
 (defun agent-agf019-generar-moviment (coord dest cas-dest color-propi pot-pintar)
     (cond
         ((null cas-dest) nil)
+        ((not (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)) nil)
         ((not (null (agent-agf019-cas-tipus-element cas-dest))) nil)
         (t
             (let* ((color-sol (agent-agf019-cas-color-casella cas-dest))
@@ -508,18 +486,6 @@
 (defun agent-agf019-aplica-direccio (coord dir)
     (list (+ (car coord) (car dir))
           (+ (cadr coord) (cadr dir))))
-
-;; agent-agf019-girar-90: gira un vector 90 graus (sentit horari)
-;; Paràmetres:
-;;   dir - vector (dx dy)
-(defun agent-agf019-girar-90 (dir)
-    (list (- (cadr dir)) (car dir)))
-
-;; agent-agf019-girar-180: inverteix un vector de direcció
-;; Paràmetres:
-;;   dir - vector (dx dy)
-(defun agent-agf019-girar-180 (dir)
-    (list (- (car dir)) (- (cadr dir))))
 
 ;; agent-agf019-pas-cap-a: retorna la casella adjacent (d2<=2) que s'acosta més a l'objectiu
 ;; Paràmetres:

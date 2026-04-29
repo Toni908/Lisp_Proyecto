@@ -17,7 +17,6 @@
 
 (setq nombre-mapa "maps/basic2.map")
 (setq MAX-TORNS 1500)
-(setq *agent-agf019-random-state* (make-random-state t)) ;; Inicialització de l'estat aleatori
 
 ; --------------- MAPA DE REFERENCIA ---------------------
 ; aixi es como formateig el mapa a partir del fitxer.
