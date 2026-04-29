@@ -365,7 +365,7 @@
 (defun agent-agf019-accions-vers-objectiu (coord objectiu color-propi tr-pintar tr-moure visio)
     (let* ((dist (agent-agf019-d2 coord objectiu))
            (pot-pintar (< tr-pintar 1))
-           (pot-moure  (< tr-moure 100))
+           (pot-moure  (< tr-moure 1.0))
            (dest-mov   (agent-agf019-pas-cap-a coord objectiu))
            (cas-dest   (agent-agf019-buscar-casella dest-mov visio))
            (color-dest (cond ((null cas-dest) nil)
@@ -425,7 +425,7 @@
 ;; agent-agf019-accions-moviment-normal: prova les 8 direccions sistemàticament
 ;; començant per una aleatòria
 (defun agent-agf019-accions-moviment-normal (coord color-propi tr-pintar tr-moure id ronda visio)
-    (let* ((pot-moure  (< tr-moure 100))
+    (let* ((pot-moure  (< tr-moure 1.0))
            (pot-pintar (< tr-pintar 1))
            (dirs       (agent-agf019-totes-direccions)))
         (cond

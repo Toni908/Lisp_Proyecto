@@ -379,10 +379,10 @@
             ((not (equal (celda-tipus celda-src) 'bolla)) mapa)
             ((es-unitat celda-dst) mapa)
             ((> dist 2) mapa)
-            ((>= (celda-tr-moure-bolla celda-src) 100) mapa)
+            ((>= (celda-tr-moure-bolla celda-src) 1.0) mapa)
             (t
              (let* (
-                (base-cooldown (cond ((= dist 2) 141) (t 100)))
+                (base-cooldown (cond ((= dist 2) 1.41) (t 1.0)))
                 (factor (cond ((equal (cadr celda-dst)
                                       (celda-color-propi-bolla celda-src)) 1)
                               (t 3)))
@@ -491,7 +491,7 @@
                            (celda-colors-pintat-bolla celda)  ; colors-pintat
                            (celda-id-bolla celda)             ; id
                            (max 0 (- (celda-tr-pintar-bolla celda) 1)) ; tr-pintar
-                           (max 0 (- (celda-tr-moure-bolla celda) 100))  ; tr-moure de 100 en 100 per a decimals
+                           (max 0 (- (celda-tr-moure-bolla celda) 1.0))  ; tr-moure 
                            (celda-coord celda)))              ; coord
                     (t celda)))
             (decrementar-celdas (cdr fila) equip))
