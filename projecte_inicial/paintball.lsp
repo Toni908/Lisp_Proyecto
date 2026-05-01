@@ -15,7 +15,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic2.map")
+(setq nombre-mapa "maps/basic3.map")
 (setq MAX-TORNS 1500)
 
 ; --------------- MAPA DE REFERENCIA ---------------------
