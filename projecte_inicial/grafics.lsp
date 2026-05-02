@@ -7,9 +7,16 @@
 ;; <Descripció de les funcions d'aquest fitxer>
 
 ;; Documentació d'això...
+
+;; DOCUMENTACIÓ DE LES FUNCIONS GRÀFIQUES
+
+;; pinta: Genera la interfície visual principal.
+;; Paràmetres:
+;;     mapa - l'estructura de dades completa de l'estat del joc.
 (defun pinta (mapa)
     (cls)
     (color 0 0 0)
+    
     ; Cabecera con info
     (princ "Ronda: ")
     (princ (car (car mapa)))
@@ -31,11 +38,15 @@
     (print "Flecha abaix: Apagar Joc")
     
     ; Mapa
-    (imprimir-files (cdr mapa) 0 10) ; mapa fila mida, esta a 10 para que sea mas bonito, pero recomiendo ponerlo a 6 para mapas grandes, ya que si no no se vera.
+    (imprimir-files (cdr mapa) 0 10) ;; mapa fila mida, la mida es important, per a mapas grosos deuria ser 6
     (color 0 0 0)
 )
 
-;; Imprime Fila por fila
+;; imprimir-files: Itera verticalment per dibuixar cada fila del mapa.
+;; Paràmetres:
+;;     mapa - el mapa sense metadatos
+;;     fila - índex de la fila actual (per al multiplicador de fila)
+;;     mida - dimensió quadrat.
 (defun imprimir-files (mapa fila mida)
     (cond
         ((null mapa) nil)
@@ -47,34 +58,45 @@
     )
 )
 
-;; Imprime elemento, se utiliza con files
+;; imprimir-fila: Itera horitzontalment per dibuixar cada cel·la d'una fila.
+;; Paràmetres:
+;;     fila     - llista d'elements (caselles) de la fila actual.
+;;     columna  - índex de la columna actual.
+;;     mida     - dimensió quadrat.
 (defun imprimir-fila (fila columna mida)
     (cond
         ((null fila) nil)
         (t
             (moverel mida 0)
             (pinta-terreno (car fila) mida)
-            (pinta-unidad (car fila) mida) ; para formas diferentes no cuadradas
-            (pinta-marca (car fila) mida) ; pinta las marcas de las unidades
-            (quadrat mida) ; marco cuadrado
+            (pinta-unidad (car fila) mida)
+            (pinta-marca (car fila) mida)
+            (quadrat mida)
             (imprimir-fila (cdr fila) (+ columna 1) mida)
         )
     )
 )
 
+;; pinta-marca: Determina si una casella ha de mostrar marques de pintura.
+;; Paràmetres:
+;;     casella - dades de la casella actual.
+;;     mida    - dimensió quadrat.
 (defun pinta-marca (casella mida)
     (moverel (/ mida 2) (/ mida 2))
     (cond ( (pertany 'base casella)
-            (marcar (cadddr (cdr casella))) ; posicion 5 las marcas de base
+            (marcar (cadddr (cdr casella))) 
           )
           ( (pertany 'bolla casella)
-            (marcar (cadddr (cdr (cdr casella)))) ; posicion 6 las marcas de unidad
+            (marcar (cadddr (cdr (cdr casella)))) 
           )
           (t nil)
     )
     (moverel (- (/ mida 2)) (- (/ mida 2)))
 )
 
+;; marcar: Dibuixa línies de colors segons les marques actives.
+;; Paràmetres:
+;;     marcas - llista de símbols de pintura ('b, 'r, 'g).
 (defun marcar (marcas)
     (cond ((contiene marcas 'b) 
            (color 80 120 210)
@@ -97,12 +119,17 @@
           (t t))
 )
 
+;; linea: Funció auxiliar gràfica per dibuixar un traç horitzontal.
 (defun linea ()
     (drawrel -2 0)
     (drawrel 5 0)
     (moverel -3 0)
 )
 
+;; contiene: Funció lògica de cerca en llistes.
+;; Paràmetres:
+;;     l - llista on buscar.
+;;     e - element a trobar.
 (defun contiene (l e)
     (cond ((null l) nil)
           ((equal (car l) e) t)
@@ -110,7 +137,10 @@
     )
 )
 
-;; pinta las unidades
+;; pinta-unidad: Selecciona la forma geomètrica segons l'objecte.
+;; Paràmetres:
+;;     casella - dades de la casella actual.
+;;     mida    - dimensió quadrat.
 (defun pinta-unidad (casella mida)
     (cond
         ((equal (caddr casella) 'lab) (triangle mida))
@@ -119,11 +149,15 @@
     )
 )
 
-;; rellena el quadrado de lineas
+;; pinta-terreno: Emplena el fons de la casella línia a línia.
+;; Paràmetres:
+;;     casella - dades de la casella per obtenir el color.
+;;     mida    - dimensió quadrat.
+;;     counter - comptador recursiu per a l'alçada.
 (defun pinta-terreno (casella mida &optional (counter mida))
     (cond
         ((= counter 0)
-            (moverel 0 (- mida)))   ;; restaura posición al final
+            (moverel 0 (- mida)))
         (t
             (color-casella casella)
             (drawrel mida 0)
@@ -133,19 +167,21 @@
     )
 )
 
-; definir el color de las casillas base, agua, color, o equipo
+;; color-casella: Assigna el color RGB segons l'estat del terreny/base/aigua.
+;; Paràmetres:
+;;     casella - llista de dades de la cel·la.
 (defun color-casella (casella)
     (cond
-        ((equal (caddr casella) 'base) ; prioridad a las bases
+        ((equal (caddr casella) 'base)
             (cond
-                ((equal (cadddr casella) 'e1) (color 255 0 255)) ; o 128 0 128 para morado mas profundo
+                ((equal (cadddr casella) 'e1) (color 255 0 255))
                 (t (color 255 255 0))
             )
         )
-        ((equal (caddr casella) 'lab) ; el triangulo se lo haremos en estructura
+        ((equal (caddr casella) 'lab)
             (cond
-                ((equal (cadddr casella) 'e1) (color 255 0 255)) ; o 128 0 128 para morado mas profundo
-                ((equal (cadddr casella) 'e2) (color 255 255 0)) ; o 128 0 128 para morado mas profundo
+                ((equal (cadddr casella) 'e1) (color 255 0 255))
+                ((equal (cadddr casella) 'e2) (color 255 255 0))
                 (t (color 0 0 0))
             )
         )
@@ -157,7 +193,9 @@
     )
 )
 
-; el color de las unidades, solo lo usaran los soldados
+;; color-unidad: Defineix el color de la unitat segons la seva pròpia marca.
+;; Paràmetres:
+;;     casella - dades de la casella que conté la unitat.
 (defun color-unidad (casella)
     (cond
         ((equal (cadddr (cdr casella)) 'b) (color 80 120 210))
@@ -167,16 +205,21 @@
     )
 )
 
-;; Hace un quadrado, se utiliza solo para los bordes
+;; quadrat: Dibuixa el perímetre negre d'una casella.
+;; Paràmetres:
+;;     mida - dimensió quadrat.
 (defun quadrat (mida)
-    (color 0 0 0) ; negro
+    (color 0 0 0)
     (drawrel 0 mida)
     (drawrel mida 0)
     (drawrel 0 (- mida))
     (drawrel (- mida) 0)
 )
 
-; pone el puntero en el centro, llama a cercle y luego deja el puntero en su sitio
+;; cercle: Dibuixa una unitat 'bolla' (rombe) i la seva vora d'equip.
+;; Paràmetres:
+;;     casella - dades de la cel·la.
+;;     mida    - dimensió quadrat.
 (defun cercle (casella mida)
     (color-unidad casella)
     (moverel (/ mida 2) 0)
@@ -188,16 +231,22 @@
     (drawrel (- (/ mida 2)) (- (/ mida 2)))
     (drawrel (/ mida 2) (- (/ mida 2)))
 
-    (moverel (- (/ mida 2)) 0) ; restaurar posición
+    (moverel (- (/ mida 2)) 0)
 )
 
+;; color-equip: Assigna color al traç de l'equip (negre o groc).
+;; Paràmetres:
+;;     casella - celda a pintar
 (defun color-equip (casella)
     (cond ((equal (celda-equip casella) 'e1) (color 0 0 0))  
           (t (color 255 255 0))
     )
 )
 
-; rellena el rombo
+;; cercle-fill: Emplena l'interior del rombe de la unitat.
+;; Paràmetres:
+;;     mida    - dimensió quadrat.
+;;     counter - comptador per a les línies d'emplenat.
 (defun cercle-fill (mida &optional (counter mida))
     (cond
         ((= counter 0) 
@@ -216,23 +265,24 @@
     )
 )
 
-
-;; triangulo laboratorio
+;; triangle: Dibuixa la representació visual del laboratori, triangles.
+;; Paràmetres:
+;;     mida - dimensió quadrat.
 (defun triangle (mida)
     (color 255 255 255)
     (triangle-fill mida 0)
-    ;; restaurar posición como haces en pinta-terreno
     (moverel 0 (- mida))
 )
 
-; rellena triangulo
+;; triangle-fill: Funció recursiva per emplenar el triangle.
+;; Paràmetres:
+;;   mida - dimensió quadrat.
+;;   y    - posició vertical actual de l'emplenat.
 (defun triangle-fill (mida y)
     (cond
         ((= y mida) nil)
         (t
-            ;; dibuja línea horizontal del triángulo
             (drawrel (- mida y) 0)
-            ;; volver al inicio de la línea
             (moverel (- (- mida y)) 1)
             (triangle-fill mida (+ y 1))
         )
