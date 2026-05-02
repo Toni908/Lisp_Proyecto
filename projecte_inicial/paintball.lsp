@@ -268,6 +268,11 @@
                 (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
                 mapa-final))))) 
 
+; aplicar-pinta: pinta una casella del mapa amb el color de la bolla
+; Paràmetres:
+;   mapa   - el mapa
+;   args   - coordenada destí amb desplaçament (x y)
+;   unitat - la bolla que pinta
 (defun aplicar-pinta (mapa args unitat)
     (let* ((coord-dst (coord-real args mapa))
             (coord-src (coord-real (cadr (cddddr unitat)) mapa))
@@ -482,12 +487,21 @@
 ; ------------------------------------------------------------------
 ; decrementar cooldowns logica
 
+; decrementar-cooldowns: decrementa els cooldowns de totes les bolles d'un equip
+; Es crida cada torn abans que l'equip actuï, per alliberar les accions bloquejades
+; Paràmetres:
+;   mapa  - el mapa
+;   equip - l'equip actiu aquest torn ('e1 o 'e2)
 (defun decrementar-cooldowns (mapa equip)
   (cons (car mapa) ; mantenemos el estado
         (decrementar-filas (cdr mapa) equip)
   )
 )
 
+; decrementar-filas: recorre les files del mapa y crida a decrementant celdas
+; Paràmetres:
+;   mapa  - les files del mapa (sense l'estat)
+;   equip - l'equip actiu
 (defun-tco decrementar-filas (mapa equip &optional (acc nil))
     (cond
         ((null mapa) (reverse acc))
@@ -498,6 +512,11 @@
     )
 )
 
+; decrementar-celdas: recorre les celdas d'una fila decrementant cooldowns
+; Només afecta les bolles de l'equip actiu, la resta de celdas no es toquen
+; Paràmetres:
+;   fila  - la fila actual
+;   equip - l'equip actiu
 (defun-tco decrementar-celdas (fila equip &optional (acc nil))
     (cond
         ((null fila) (reverse acc))
