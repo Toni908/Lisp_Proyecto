@@ -379,7 +379,7 @@
                     (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)
                     (null (agent-agf019-cas-tipus-element cas-dest)))
                   (cond
-                      ;; El sòl destí no és del nostre color: pintem el sòl primer
+                      ;; El sòl destí no és del nostre color: pintem el suelo primer
                       ((and (not (equal color-dest color-propi))
                             (agent-agf019-d2 coord dest-mov) )
                        (list (list 'pinta objectiu) (list 'pinta dest-mov) (list 'mou dest-mov)))
@@ -388,19 +388,21 @@
                   ))
                  (t (list (list 'pinta objectiu)))
              ))
-            ;; Fora de rang: ens movem cap a l'objectiu (pintant el sòl si cal)
+            ;; Fora de rang: ens movem cap a l'objectiu (pintant el suelo si cal)
+            ;; Si el pas directe esta bloquejat, fem moviment normal (exploracio)
             (pot-moure
              (cond
-                 ((and  (not (null dest-mov)) (not (null cas-dest))
-                        (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)  
-                        (null (agent-agf019-cas-tipus-element cas-dest)))
+                 ((and (not (null dest-mov)) (not (null cas-dest))
+                       (equal (agent-agf019-cas-tipus-casella cas-dest) 'terra)
+                       (null (agent-agf019-cas-tipus-element cas-dest)))
                   (cond
                       ((and pot-pintar (not (equal color-dest color-propi))
                             (<= (agent-agf019-d2 coord dest-mov) 5))
                        (list (list 'pinta dest-mov) (list 'mou dest-mov)))
                       (t (list (list 'mou dest-mov)))
                   ))
-                 (t nil)
+                 (t (agent-agf019-accions-moviment-normal
+                        coord color-propi tr-pintar tr-moure nil nil visio))
              ))
             (t nil)
         )

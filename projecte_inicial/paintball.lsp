@@ -15,7 +15,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic3.map")
+(setq nombre-mapa "maps/basic28.map")
 (setq MAX-TORNS 1500)
 
 ; --------------- MAPA DE REFERENCIA ---------------------
@@ -258,7 +258,7 @@
                     ((equal equip 'e1) (agent-agf019 unitat-nova))
                     (t (agent-agf019 unitat-nova))))
                 (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
-                mapa-final))))) ; <-- cuerpo del let*: devuelve mapa-final, paréntesis correctos
+                mapa-final))))) 
 
 (defun aplicar-pinta (mapa args unitat)
   (let* ((coord-dst (coord-real args mapa))
@@ -274,6 +274,10 @@
       ((not (equal (celda-tipus celda-src) 'bolla)) mapa)
       ((>= (celda-tr-pintar-bolla celda-src) 1) mapa)
       ((> (d2 coord-src coord-dst) 5) mapa)
+      ((and (or (equal (celda-tipus celda-dst) 'bolla) ; no pinta unitats del mateix equip
+                (equal (celda-tipus celda-dst) 'base))
+            (equal (celda-equip celda-dst) equip-pinta))
+       mapa)
 
       (t
        (let* ((color (celda-color-propi-bolla celda-src))
