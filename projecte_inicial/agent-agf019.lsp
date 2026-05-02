@@ -4,17 +4,16 @@
 ;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot
 ;; Assignatura: 21721 – Llenguatges de Programació
 ;; Convocatòria: primera convocatòria.
-;; Fitxer de l'agent intel·ligent AGF019 (Equip 1).
+;; Fitxer de l'agent intel·ligent AGF019.
 ;;
 ;; == Descripció general ==
 ;; Aquest agent implementa la lògica per a les unitats de l'equip e1.
 ;; - BASE: Crea bolles sempre que tingui >= 50 de pintura. Alterna entre
 ;;   els tres colors (r, g, b) per no crear mai dues bolles iguals seguides.
 ;;   Escull la casella adjacent lliure més propera.
-;; - BOLLA: Es mou en una direcció fixa fins que troba un obstacle. Si
-;;   detecta un laboratori sense capturar o enemic, o una bolla/base enemiga
-;;   sense el seu color, s'hi dirigeix per pintar-la. Si no hi ha objectiu
-;;   clar, pinta el sòl davant seu per moure's sense penalització.
+;; - BOLLA: Es mou en una direcció aleatoria fins que troba un objectiu, pinta el sol sempre que pot al moure-se. 
+;;   Si detecta un laboratori sense capturar o enemic, o una bolla/base enemiga
+;;   sense el seu color, s'hi dirigeix per pintar-la.
 ;;
 ;; == Estructura de dades rebuda (dades) ==
 ;;   1. ronda        - nombre de torn (enter)

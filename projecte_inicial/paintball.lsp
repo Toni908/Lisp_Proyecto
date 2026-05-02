@@ -1,7 +1,7 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
 ;; Estudiants: Antonio Garcia Font
-;; Professor: XXX.
+;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
 ;; <Descripció de les funcions d'aquest fitxer>
@@ -15,7 +15,7 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic28.map")
+(setq nombre-mapa "maps/basic2.map")
 (setq MAX-TORNS 1500)
 
 ; --------------- MAPA DE REFERENCIA ---------------------
