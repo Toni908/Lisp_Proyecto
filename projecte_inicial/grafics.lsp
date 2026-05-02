@@ -15,15 +15,20 @@
     (princ (car (car mapa)))
     
     (move 30 80)
-    (princ "    Turn de Equip: ")
+    (princ " | Turn de Equip: ")
     (print (equip-actual mapa))
     
     ; Leyenda equipos
-    (princ "Pintura E1: ")
-    (print (cadr (car mapa)))
+    (princ "Pintura e1: ")
+    (princ (cadr (car mapa)))
     
-    (princ "Pintura E2: ")
+    (princ " | Pintura e2: ")
     (print (caddr (car mapa)))
+
+    (print "Flecha dreta: Seguent Torn")
+    (print "Flecha adalt: Acelerar 10 Torn")
+    (print "Flecha esquerra: Autoavanzar")
+    (print "Flecha abaix: Apagar Joc")
     
     ; Mapa
     (imprimir-files (cdr mapa) 0 10) ; mapa fila mida, esta a 10 para que sea mas bonito, pero recomiendo ponerlo a 6 para mapas grandes, ya que si no no se vera.

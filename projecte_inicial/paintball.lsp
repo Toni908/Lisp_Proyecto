@@ -16,6 +16,8 @@
 ;;      lab (terra b lab e1 nil (2 2)) | (terra color unitat equip color(en deshus) coordenades)
 ;;      base (terra g base e1 nil 1 (0 1)) | (terra color unitat equip colors-pintats id coordenades)
 ;;      terra (terra g (0 0)) | (terra color coordenades)
+;; - El mapa, al principi, te una llista amb metainformacio en respecta a la partida
+;;   aquesta llista es composa de (torn pinturae1 pinturae2 desplazamentx desplazamenty)
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -26,8 +28,8 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic2.map")    ;; Que mapa?
-(setq MAX-TORNS 1500)                   ;; TORNS-MAXIMS
+(setq nombre-mapa "maps/basic1.map")    ;; Que mapa?
+(setq MAX-TORNS 500)                   ;; TORNS-MAXIMS
 (setq rs (make-random-state t))         ;; Inicialització de l'estat aleatori
 
 ; --------------- TESTS ---------------------
@@ -71,7 +73,7 @@
 ;; Inicialitza l'estat global amb torn 0, 200 de pintura per equip i un desplaçament
 ;; aleatori, construeix el mapa amb meta-informació i arranca el bucle principal.
 (defun inici ()
-    (monitor (cons (list 0 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
+    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
 )
 
 ;; llegeix-exp: llegeix una expressió LISP d'un fitxer de text i la retorna.
@@ -100,9 +102,10 @@
         (t
             (let* ((tecla (get-key)))
                 (cond
-                    ((= tecla 328) (monitor (fer-n-torns mapa 10)))   ; flecha arriba avanza de 10 en 10
-                    ((= tecla 333) (monitor (fer-torn mapa)))   ; flecha derecha avanza de 1 en 1
-                    ((= tecla 336) (cls))                       ; flecha abajo finaliza
+                    ((= tecla 328) (monitor (fer-n-torns mapa 10)))     ; flecha adalt avanza de 10 en 10
+                    ((= tecla 331) (autoavanza mapa))                   ; flecha esquerra autoavanza fins el final del joc
+                    ((= tecla 333) (monitor (fer-torn mapa)))           ; flecha dreta avanza de 1 en 1
+                    ((= tecla 336) (cls))                               ; flecha abaix finalitza
                     (t (monitor mapa))
                 )
             )
@@ -110,14 +113,27 @@
     )
 )
 
+;; autoavanza: avança la partida torn a torn fins al final, pintant cada estat.
+;; Quan la partida acaba, torna al monitor per mostrar el guanyador.
+;; Paràmetres:
+;;   mapa - mapa actual
+(defun-tco autoavanza (mapa)
+    (cond
+        ((fi-partida-mapa mapa) (monitor mapa))
+        (t
+            (pinta mapa)
+            (autoavanza (fer-torn mapa)))))
+
 ;; fer-n-torns: funcion auxiliar para hacer x turnos
 ;; Paràmetres: 
 ;;   mapa:  mapa actual
-;;   n:      turnos que queremos hacer
+;;   n:     turnos que queremos hacer
 (defun-tco fer-n-torns (mapa n)
     (cond
         ((= n 0) mapa)
-        (t (fer-n-torns (fer-torn mapa) (- n 1)))))
+        (t 
+            (pinta mapa)
+            (fer-n-torns (fer-torn mapa) (- n 1)))))
 
 ;; fer-torn: calcula el nou estat del mapa per al torn actual.
 ;; Incrementa el torn, afegeix pintura a l'equip actiu (2 base + 1 per cada lab capturat),
@@ -179,7 +195,8 @@
                    (accions (cond
                                 ((equal equip 'e1) (agent-agf019 unitat))
                                 (t (agent-agf019 unitat))))   ; demanam accions a la IA
-                   (mapa-v2 (aplicar-accions-unitat mapa accions unitat)))
+                   (mapa-v2 (aplicar-accions-unitat mapa accions unitat))
+                  )
                 (processar-unitats mapa-v2 (cdr unitats) equip)
             )
         )
@@ -691,17 +708,16 @@
     )
 )
 
-; compta-bolles: compta les bolles vives d'un equip
+; compta-bolles: compta les bolles vives d'un equip, serveix per a identificar el guanyador
 ; Paràmetres:
 ;   unitats-equip - llista d'unitats d'un equip
-(defun-tco compta-bolles (unitats-equip)
-    (cond ((null unitats-equip) 0)
+(defun-tco compta-bolles (unitats-equip &optional (acc 0))
+    (cond ((null unitats-equip) acc)
           ((equal (car (cddddr (car unitats-equip))) 'bolla)
-           (+ 1 (compta-bolles (cdr unitats-equip))))
-          (t (compta-bolles (cdr unitats-equip)))
+           (compta-bolles (cdr unitats-equip) (+ acc 1)))
+          (t (compta-bolles (cdr unitats-equip) acc))
     )
 )
-
 ;------------------------------------------------------------------------------------------------   
 ; funcions per construir l'array esta a partir del mapa
 
