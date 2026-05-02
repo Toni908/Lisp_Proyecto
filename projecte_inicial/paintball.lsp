@@ -1,9 +1,10 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
-;; Estudiants: Antonio Garcia Font
-;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot.
+;; Estudiants: Antonio Garcia Font.
+;; Professor: Miquel Cabot.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
+
 ;; == Descripció general ==
 ;; Aquest fitxer representa la logica del joc, exterioritzant el apartat grafic
 ;; y la ia. El joc inclou els seguents apartats del joc:
@@ -18,6 +19,12 @@
 ;;      terra (terra g (0 0)) | (terra color coordenades)
 ;; - El mapa, al principi, te una llista amb metainformacio en respecta a la partida
 ;;   aquesta llista es composa de (torn pinturae1 pinturae2 desplazamentx desplazamenty)
+;;
+;; == Inici y Ajusts ==
+;; Per a iniciar el joc, fer (load "paintball") y despres se iniciara el joc amb (inici)
+;; Per a cambiar el mapa, anar a la funcio llegeix-exp, alla explica on cambiar el nom del mapa
+;; Per a cambiar el nombre de torns, anar a fi-partida-mapa, haya es troba el nombre maxim de torns
+;; de base es 1500.
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -28,8 +35,6 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic1.map")    ;; Que mapa?
-(setq MAX-TORNS 1500)                   ;; TORNS-MAXIMS
 (setq rs (make-random-state t))         ;; Inicialització de l'estat aleatori
 
 ; --------------- TESTS ---------------------
@@ -66,7 +71,6 @@
 ;  (list 0 'e1 150 33 'bolla (list 2 1) (list 'b) 'b 0 0 nil))
 
 ; (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
-
 ; --------------- TESTS ---------------------
 
 ;; inici: punt d'entrada del joc.
@@ -81,7 +85,7 @@
 ;; Paràmetres:
 ;;   nom-fitxer - path del fitxer a llegir
 (defun llegeix-exp (nom-fitxer)
-    (let* ((fp (open nom-fitxer))
+    (let* ((fp (open "maps/basic1.map"))      ;; mapa a elegir
            (e (read fp nil nil)))
         (close fp)
         e)
@@ -639,14 +643,14 @@
 )
 
 ;------------------------------------------------------------------------------------------------
-; Control fi partida
+;; Control fi partida
 
 ;; fi-partida-mapa: comprova fi de partida només amb el mapa, sense trobar-unitats
 ;; Paràmetres:
 ;;   mapa - el mapa actual
 (defun fi-partida-mapa (mapa)
     (cond
-        ((>= (torn mapa) MAX-TORNS) t)
+        ((>= (torn mapa) 1500) t)                                   ; Turnos hasta final de juego
         ((not (te-base-al-mapa (celdas-mapa (cdr mapa)) 'e1)) t)
         ((not (te-base-al-mapa (celdas-mapa (cdr mapa)) 'e2)) t)
         (t nil)

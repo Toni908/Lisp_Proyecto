@@ -1,16 +1,15 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
-;; Estudiant: Antonio Garcia Font
-;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot
-;; Assignatura: 21721 – Llenguatges de Programació
+;; Estudiant: Antonio Garcia Font.
+;; Professor: Miquel Cabot.
+;; Assignatura: 21721 – Llenguatges de Programació.
 ;; Convocatòria: primera convocatòria.
 ;; Fitxer de l'agent intel·ligent AGF019.
 ;;
 ;; == Descripció general ==
 ;; Aquest agent implementa la lògica per a les unitats de l'equip e1.
-;; - BASE: Crea bolles sempre que tingui >= 50 de pintura. Alterna entre
-;;   els tres colors (r, g, b) per no crear mai dues bolles iguals seguides.
-;;   Escull la casella adjacent lliure més propera.
+;; - BASE: Crea bolles sempre que tingui >= 50 de pintura. Crea aleatoriament
+;;   el color de la bolla. Escull la casella adjacent lliure més propera.
 ;; - BOLLA: Es mou en una direcció aleatoria fins que troba un objectiu, pinta el sol sempre que pot al moure-se. 
 ;;   Si detecta un laboratori sense capturar o enemic, o una bolla/base enemiga
 ;;   sense el seu color, s'hi dirigeix per pintar-la.
