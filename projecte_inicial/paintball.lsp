@@ -230,6 +230,16 @@
 ;----------------------------------------------------------------------------------
 ; Logica de aplicar acciones en una lista
 
+;; aplicar-accio: distribueix una acció al seu gestor corresponent segons el tipus.
+;; Si l'acció no és reconeguda, retorna el mapa sense canvis.
+;; Les accions possibles són:
+;;   (crea-bolla args) - crea una nova bolla al mapa
+;;   (pinta args)      - pinta una cel·la del mapa
+;;   (mou args)        - mou una bolla a una nova posició
+;; Paràmetres:
+;;   mapa   - el mapa actual
+;;   accio  - la llista que representa l'acció: (tipus args)
+;;   unitat - la unitat que executa l'acció
 (defun aplicar-accio (mapa accio unitat)
   (cond
     ((equal (car accio) 'crea-bolla)
@@ -256,7 +266,12 @@
     )
 )
 
-; substituir-celda-fila: substitueix una celda dins una fila
+;; substituir-celda-fila: substitueix una cel·la dins d'una fila del mapa per una nova,
+;; cercant per coordenada. La resta de cel·les de la fila no es modifiquen.
+;; Paràmetres:
+;;   coord      - coordenada real (fila columna) de la cel·la a substituir
+;;   nova-celda - la nova cel·la que substituirà l'antiga
+;;   fila       - la fila actual del mapa
 (defun-tco substituir-celda-fila (coord nova-celda fila &optional (acc nil))
     (cond
         ((null fila) (reverse acc))
@@ -266,7 +281,13 @@
     )
 )
 
-; substituir-celda: substitueix una celda al mapa per una nova
+;; substituir-celda: substitueix una cel·la al mapa complet per una nova,
+;; recorrent fila a fila i delegant la cerca a substituir-celda-fila.
+;; Retorna un nou mapa amb la cel·la substituïda.
+;; Paràmetres:
+;;   coord      - coordenada real (fila columna) de la cel·la a substituir
+;;   nova-celda - la nova cel·la que substituirà l'antiga
+;;   mapa       - les files del mapa (sense l'estat, és a dir, (cdr mapa))
 (defun-tco substituir-celda (coord nova-celda mapa &optional (acc nil))
     (cond
         ((null mapa) (reverse acc))
@@ -536,7 +557,10 @@
     )
 )
 
-; id-base: retorna 1 si és base e1, 2 si és base e2
+;; id-base: retorna l'identificador numèric d'una base segons el seu equip.
+;; Retorna 1 si la base pertany a e1, 2 si pertany a e2.
+;; Paràmetres:
+;;   celda - la cel·la de tipus base
 (defun id-base (celda)
     (cond ((pertany 'e1 celda) 1)
           (t 2)
@@ -725,7 +749,13 @@
 ;------------------------------------------------------------------------------------------------   
 ; funcions per construir l'array esta a partir del mapa
 
-; trobar-unitats-llista: filtra les celdas que son unitats
+;; trobar-unitats-llista: filtra una llista plana de cel·les i retorna només les que
+;; pertanyen a un equip concret, convertides al format d'unitat que rep la IA.
+;; Paràmetres:
+;;   celdas - llista plana de totes les cel·les del mapa
+;;   mapa   - el mapa actual (necessari per construir la unitat amb celda-a-unitat)
+;;   equip  - l'equip a filtrar ('e1 o 'e2)
+;;   acc    - acumulador intern per a la recursió final (opcional, per defecte nil)
 (defun-tco trobar-unitats-llista (celdas mapa equip &optional (acc nil))
     (cond
         ((null celdas) (reverse acc))
@@ -737,7 +767,9 @@
     )
 )
 
-; es-unitat: comprova si una celda té una unitat (base o bolla)
+;; es-unitat: comprova si una cel·la conté una unitat (base o bolla).
+;; Paràmetres:
+;;   celda - la cel·la a comprovar
 (defun es-unitat (celda)
     (cond ((pertany 'base celda) t)
           ((pertany 'bolla celda) t)
@@ -745,8 +777,11 @@
     )
 )
 
-
-; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
+;; trobar-unitats: retorna totes les unitats del mapa agrupades per equip.
+;; Avalua a una llista de la forma ((unitats-e1) (unitats-e2)), on cada unitat
+;; ja està en el format que rep la IA (construït per celda-a-unitat).
+;; Paràmetres:
+;;   mapa - el mapa actual
 (defun trobar-unitats (mapa)
     (let* ((celdas (celdas-mapa (cdr mapa))))
         (list
@@ -756,14 +791,24 @@
     )
 )
 
-; celdas-mapa: podria llamarlo aplanar mapa, ya que me lo aplana todo en una lista para poder buscar mas facilmente
+;; celdas-mapa: aplana el mapa (llista de files) en una única llista plana de cel·les.
+;; Facilita cercar i iterar sobre totes les cel·les sense haver de recórrer files i columnes.
+;; Paràmetres:
+;;   mapa - les files del mapa (sense l'estat, és a dir, (cdr mapa))
+;;   acc  - acumulador intern per a la recursió final (opcional, per defecte nil)
 (defun-tco celdas-mapa (mapa &optional (acc nil))
     (cond ((null mapa) (reverse acc))
           (t (celdas-mapa (cdr mapa) (append (car mapa) acc)))
     )
 )
 
-; celda-a-unitat: construeix la llista d'info d'una unitat a partir de la celda i l'estat
+;; celda-a-unitat: construeix la llista d'informació d'una unitat a partir de la cel·la
+;; i l'estat global del mapa. Aquesta és la representació que rep la IA per paràmetre.
+;; El format retornat és:
+;;   (torn equip pintura id tipus coord colors-pintat color-propi tr-pintar tr-moure visio)
+;; Paràmetres:
+;;   celda - la cel·la del mapa que conté la unitat (base o bolla)
+;;   mapa  - el mapa actual (per obtenir torn, pintura i desplaçament de l'estat)
 (defun celda-a-unitat (celda mapa)
     (let* ((tipus (celda-tipus celda))                              ; agafa el tipus: 'base o 'bolla
            (equip (celda-equip celda))                              ; agafa l'equip: 'e1 o 'e2
@@ -789,7 +834,7 @@
                   (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
             (calcular-visio (celda-coord celda) tipus mapa))        ; 11. visio 
     )
-)     
+) 
 
 ;; celda-a-visio: converteix una celda interna del mapa al format de visió que rep la IA.
 ;; Elimina la meta-informació interna (coordenades reals, ids...) i retorna només
@@ -879,14 +924,22 @@
 ;----------------------------------------------------------------------------------------
 ;Per treballar amb el desplazament
 
-; coord-amb-desplacament: suma dx dy a una coordenada
+;; coord-amb-desplacament: converteix una coordenada interna a coordenada visible per la IA,
+;; sumant el desplaçament global del mapa (dx, dy) a la coordenada real.
+;; Paràmetres:
+;;   coord - coordenada interna del mapa (fila columna)
+;;   mapa  - el mapa actual (per obtenir dx i dy de l'estat)
 (defun coord-amb-desplacament (coord mapa)
     (list (+ (car coord) (estat-dx mapa))
           (+ (cadr coord) (estat-dy mapa))
     )
 )
 
-; coord-real: resta dx dy a una coordenada
+;; coord-real: converteix una coordenada visible per la IA a coordenada interna del mapa,
+;; restant el desplaçament global (dx, dy). Invers de coord-amb-desplacament.
+;; Paràmetres:
+;;   coord - coordenada amb desplaçament (la que rep/envia la IA)
+;;   mapa  - el mapa actual (per obtenir dx i dy de l'estat)
 (defun coord-real (coord mapa)
     (list (- (car coord) (estat-dx mapa))
           (- (cadr coord) (estat-dy mapa))
@@ -911,20 +964,18 @@
 (defun celda-id-bolla (celda) (caddr (cddr (cddr celda))))
 (defun celda-tr-pintar-bolla (celda) (cadddr (cddr (cddr celda))))
 (defun celda-tr-moure-bolla (celda) (car (cddddr (cddr (cddr celda)))))
-(defun celda-coord-base (celda) (caddr (cddr (cddr celda)))) ;; realment podria sustituir aquestes dues per celda-coord, ya que el vaig cambiar per a sempre estar al final la coordenada en el mapa nostre
+(defun celda-coord-base (celda) (caddr (cddr (cddr celda))))                            ; realment podria sustituir aquestes dues per celda-coord, ya que el vaig cambiar per a sempre estar al final la coordenada en el mapa nostre
 (defun celda-coord-bolla (celda) (cadr (cddddr (cddr (cddr celda)))))
 (defun celda-coord (celda) (car (reverse celda)))
-(defun get-equip-celda (celda) (cadddr celda)) ; get-equip-celda: retorna l'equip de la celda
-(defun torn (mapa) (car (car mapa))) ;; retorna el torn de la partida
+(defun get-equip-celda (celda) (cadddr celda))                                          ; get-equip-celda: retorna l'equip de la celda
+(defun torn (mapa) (car (car mapa)))                                                    ; retorna el torn de la partida
+(defun equip-actual (mapa) (cond  ((= (mod (torn mapa) 2) 0) 'e2) (t 'e1) ))
 
-(defun equip-actual (mapa)
-  (cond 
-    ((= (mod (torn mapa) 2) 0) 'e2)
-    (t 'e1)
-  )
-)
-
-; pertany: comprova si x pertany a la llista l, funcion de clase
+;; pertany: comprova si un element pertany a una llista.
+;; Equivalent a la funció member de LISP, però retorna t o nil.
+;; Paràmetres:
+;;   x - l'element a cercar
+;;   l - la llista on cercar
 (defun-tco pertany (x l)
     (cond ((null l) nil)
           ((equal x (car l)) t)
