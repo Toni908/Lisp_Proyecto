@@ -4,7 +4,18 @@
 ;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
-;; <Descripció de les funcions d'aquest fitxer>
+;; == Descripció general ==
+;; Aquest fitxer representa la logica del joc, exterioritzant el apartat grafic
+;; y la ia. El joc inclou els seguents apartats del joc:
+;; - Suelo amb pintures: El terra del joc es pot pintar de colors, una bolla que camini a una casella
+;;   que no sigui del seu color tendra una penalitzacio de *3 al seu cooldown de moure-se.
+;;   Si una bolla dispara desde una casella que no es del seu color tendra un *3 al cooldown de disparar.
+;; - Accepta mapas de tamany maxim.
+;; - El mapa internament es codificat de la seguent manera:
+;;      bolla (terra g bolla e1 r (r) 3 9 0 (2 1)) | (terra color unitat equip color colors-pintats id cooldown-pintar cooldown-moviment coordenades)
+;;      lab (terra b lab e1 nil (2 2)) | (terra color unitat equip color(en deshus) coordenades)
+;;      base (terra g base e1 nil 1 (0 1)) | (terra color unitat equip colors-pintats id coordenades)
+;;      terra (terra g (0 0)) | (terra color coordenades)
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -15,16 +26,9 @@
 (load 'agent-agf019)
 (load 'agent-agf019_2)
 
-(setq nombre-mapa "maps/basic2.map")
-(setq MAX-TORNS 1500)
-
-; --------------- MAPA DE REFERENCIA ---------------------
-; aixi es como formateig el mapa a partir del fitxer.
-
-; bolla (terra g bolla e1 r (r) 3 9 0 (2 1))
-; lab (terra b lab e1 nil (2 2))
-; base (terra g base e1 nil 1 (0 1))
-; terra (terra g (0 0))
+(setq nombre-mapa "maps/basic2.map")    ;; Que mapa?
+(setq MAX-TORNS 1500)                   ;; TORNS-MAXIMS
+(setq rs (make-random-state t))         ;; Inicialització de l'estat aleatori
 
 ; --------------- TESTS ---------------------
 ; com vaig fer la IA al final, tenia aquests tests per provar les funcions d’aplicar accions, però ja no em serveixen per a res,
@@ -61,27 +65,34 @@
 
 ; (setq mapa3 (aplicar-pinta mapa2 (list 2 2) unitat-bolla))
 
-; --------------- TESTS ---------------------()
+; --------------- TESTS ---------------------
 
-;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados  
-;; generales que sera ronda pintura e1 pintura e2, y el mapa
+;; inici: punt d'entrada del joc.
+;; Inicialitza l'estat global amb torn 0, 200 de pintura per equip i un desplaçament
+;; aleatori, construeix el mapa amb meta-informació i arranca el bucle principal.
 (defun inici ()
-    ;(dribble "debug.txt")
-    ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
-    (monitor (cons (list 0 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
-    ;(print (iniciar-mapa (llegeix-exp nombre-mapa) 0))
-    ;(print (trobar-unitats (cons (list 1 200 200 500 500) (iniciar-mapa (llegeix-exp nombre-mapa) 0))))
-    ;(dribble)
+    (monitor (cons (list 0 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
 )
 
-;; funcion de clase
+;; llegeix-exp: llegeix una expressió LISP d'un fitxer de text i la retorna.
+;; Funció extreta dels apunts de classe.
+;; Paràmetres:
+;;   nom-fitxer - path del fitxer a llegir
 (defun llegeix-exp (nom-fitxer)
     (let* ((fp (open nom-fitxer))
-    (e (read fp nil nil)))
-    (close fp)
-    e)
+           (e (read fp nil nil)))
+        (close fp)
+        e)
 )
 
+;; monitor: bucle principal del joc (recursiu).
+;; Pinta l'estat actual del mapa i espera una tecla:
+;;   fletxa dreta (333) → avança un torn
+;;   fletxa avall (336) → neteja la pantalla
+;;   qualsevol altra    → no fa res, torna a esperar
+;; Si la partida ha acabat, mostra el guanyador i para.
+;; Paràmetres:
+;;   mapa - l'estat actual del joc
 (defun monitor (mapa)
     (pinta mapa)
     (cond
@@ -98,47 +109,56 @@
     )
 )
 
+;; fer-torn: calcula el nou estat del mapa per al torn actual.
+;; Incrementa el torn, afegeix pintura a l'equip actiu (2 base + 1 per cada lab capturat),
+;; decrementa els cooldowns de les bolles d'aquell equip i crida la IA.
+;; Paràmetres:
+;;   mapa - l'estat actual del joc
 (defun fer-torn (mapa)
-    (let* ((equip (equip-actual mapa))
-           (labs (comptar-labs mapa))
+    (let* ((equip (equip-actual mapa))           ; equip que actua aquest torn
+           (labs (comptar-labs mapa))            ; (num-labs-e1 num-labs-e2)
            (labs-equip (cond ((equal equip 'e1) (car labs))
-                             (t (cadr labs)))
-           )
+                             (t (cadr labs))))   ; labs de l'equip actiu
            (nou-estat 
               (cond 
                ((equal equip 'e1)
                 (list (+ 1 (torn mapa))
-                      (+ (estat-pintura-e1 mapa) 2 labs-equip)
+                      (+ (estat-pintura-e1 mapa) 2 labs-equip) ; +2 base +1 per lab
                       (estat-pintura-e2 mapa)
                       (estat-dx mapa)
                       (estat-dy mapa)))
                (t
                 (list (+ 1 (torn mapa))
                       (estat-pintura-e1 mapa)
-                      (+ (estat-pintura-e2 mapa) 2 labs-equip)
+                      (+ (estat-pintura-e2 mapa) 2 labs-equip) ; +2 base +1 per lab
                       (estat-dx mapa)
-                      (estat-dy mapa)))
-               )
-            )
-           (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
-           
-           )
+                      (estat-dy mapa)))))
+           (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip)))
         (ia-action mapa-v2 equip)
-        ;mapa-v2 ; temporal
     )
 )
 
+;; ia-action: obté les unitats de l'equip actiu i les passa a processar-unitats.
+;; Paràmetres:
+;;   mapa  - l'estat actual del joc
+;;   equip - l'equip que ha d'actuar ('e1 o 'e2)
 (defun ia-action (mapa equip)
     (let* ((unitats (trobar-unitats mapa))
            (unitats-equip (cond 
                               ((equal equip 'e1) (car unitats))
                               (t (cadr unitats)))))
-        
         (processar-unitats mapa unitats-equip equip)
     )
 )
 
-; aplicar todas las acciones pasadas por la ia
+;; processar-unitats: itera sobre totes les unitats d'un equip, demana les accions
+;; a la IA per a cada una i les aplica al mapa seqüencialment.
+;; El mapa s'actualitza entre unitat i unitat, de manera que cada unitat veu
+;; els canvis produïts per les anteriors.
+;; Paràmetres:
+;;   mapa    - l'estat actual del joc
+;;   unitats - llista d'unitats de l'equip actiu
+;;   equip   - l'equip actiu ('e1 o 'e2)
 (defun processar-unitats (mapa unitats equip)
     (cond
         ((null unitats) mapa)
@@ -146,22 +166,28 @@
             (let* ((unitat (car unitats))
                    (accions (cond
                                 ((equal equip 'e1) (agent-agf019 unitat))
-                                (t (agent-agf019 unitat))))
+                                (t (agent-agf019 unitat))))   ; demanam accions a la IA
                    (mapa-v2 (aplicar-accions-unitat mapa accions unitat)))
-                
                 (processar-unitats mapa-v2 (cdr unitats) equip)
             )
         )
     )
 )
 
+;; aplicar-accions-unitat: aplica una llista d'accions d'una unitat al mapa, una per una.
+;; Si una acció no és vàlida, aplicar-accio retorna el mapa sense canvis i es continua
+;; amb la següent acció.
+;; Paràmetres:
+;;   mapa    - l'estat actual del joc
+;;   accions - llista d'accions a aplicar: (crea-bolla ...), (pinta ...), (mou ...)
+;;   unitat  - la unitat que executa les accions
 (defun aplicar-accions-unitat (mapa accions unitat)
     (cond
         ((null accions) mapa)
         (t
             (aplicar-accions-unitat
-                (aplicar-accio mapa (car accions) unitat)
-                (cdr accions)
+                (aplicar-accio mapa (car accions) unitat) ; apliquem la primera acció
+                (cdr accions)                             ; seguim amb la resta
                 unitat
             )
         )
