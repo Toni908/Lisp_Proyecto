@@ -28,7 +28,8 @@
 
 ; --------------- TESTS ---------------------
 ; com vaig fer la IA al final, tenia aquests tests per provar les funcions d’aplicar accions, però ja no em serveixen per a res,
-; els deixo comentats per si de cas són d’algun tipus d’interès per a algú
+; els deixo comentats per si de cas són d’algun tipus d’interès per a algú, el que feia era simplement introduir el buscar-celda,
+; al lisp despres de fer un load, per veure si les accions s'aplicaben correctament.
 
 ; (buscar-celda '(2 2) (celdas-mapa (cdr mapa3)))
 
@@ -62,8 +63,8 @@
 
 ; --------------- TESTS ---------------------()
 
-;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados generales que sera ronda pintura e1 
-;; pintura e2, y el mapa
+;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados  
+;; generales que sera ronda pintura e1 pintura e2, y el mapa
 (defun inici ()
     (make-random-state t)
     ;(dribble "debug.txt")
@@ -165,10 +166,6 @@
 )
 
 ;----------------------------------------------------------------------------------
-
-
-
-;----------------------------------------------------------------------------------
 ; Logica de aplicar acciones en una lista
 
 (defun aplicar-accio (mapa accio unitat)
@@ -189,7 +186,7 @@
 ; Paràmetres:
 ;   coord  - coordenada real (x y)
 ;   celdas - llista plana de totes les celdas
-(defun buscar-celda (coord celdas)
+(defun-tco buscar-celda (coord celdas)
     (cond ((null celdas) nil)
           ((equal coord (celda-coord (car celdas))) (car celdas))
           (t (buscar-celda coord (cdr celdas)))))
@@ -410,10 +407,6 @@
                 (mapa-v3 (substituir-celda coord-dst nova-bolla mapa-v2)))
                 (cons (car mapa) mapa-v3))))))
 
-;-------------------------------------------------------------------------------
-
-
-
 ; ------------------------------------------------------------------
 ; Inici de mapa, metadatos per poder treballar millor
 
@@ -463,10 +456,6 @@
 )
 
 ; ------------------------------------------------------------------
-
-
-
-; ------------------------------------------------------------------
 ; decrementar cooldowns logica
 
 (defun decrementar-cooldowns (mapa equip)
@@ -503,10 +492,6 @@
     )
 )
 
-;----------------------------------------------------------------------------------
-
-
-
 ;-------------------------------------------------------------------------------
 ; cuenta laboratorios del mapa, y devuelve un array de (numero_lab_e1, numero_lab_e2)
 
@@ -528,10 +513,6 @@
           (t (compta-labs-files (cdr fila) x))
     )
 )
-
-;------------------------------------------------------------------------------------------------
-
-
 
 ;------------------------------------------------------------------------------------------------
 ; Control fi partida
@@ -564,7 +545,7 @@
 ; te-base: comprova si una llista d'unitats té una base
 ; Paràmetres:
 ;   unitats-equip - llista d'unitats d'un equip 
-(defun te-base (unitats-equip)
+(defun-tco te-base (unitats-equip)
     (cond ((null unitats-equip) nil)
           ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
           (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
@@ -607,10 +588,6 @@
           ((equal (car (cddddr (car unitats-equip))) 'bolla)
            (+ 1 (compta-bolles (cdr unitats-equip))))
           (t (compta-bolles (cdr unitats-equip)))))
-
-;------------------------------------------------------------------------------------------------      
-
-
 
 ;------------------------------------------------------------------------------------------------   
 ; funcions per construir l'array esta a partir del mapa
@@ -731,10 +708,6 @@
     (+ (* (- (car coord-a) (car coord-b)) (- (car coord-a) (car coord-b)))
        (* (- (cadr coord-a) (cadr coord-b)) (- (cadr coord-a) (cadr coord-b)))))
 
-;------------------------------------------------------------------------------------------------   
-
-
-
 ;----------------------------------------------------------------------------------------
 ;Per treballar amb el desplazament
 
@@ -751,10 +724,6 @@
           (- (cadr coord) (estat-dy mapa))
     )
 )
-
-;------------------------------------------------------------------------------
-
-
 
 ;-----------------------------------------------------------------------------------------
 ; funcions per agafar x-element del mapa, ya que cada unitat les te a llocs diferents
@@ -788,10 +757,8 @@
 )
 
 ; pertany: comprova si x pertany a la llista l, funcion de clase
-(defun pertany (x l)
+(defun-tco pertany (x l)
     (cond ((null l) nil)
           ((equal x (car l)) t)
           (t (pertany x (cdr l)))))
-
-;-----------------------------------------------------------------------------------------
 
