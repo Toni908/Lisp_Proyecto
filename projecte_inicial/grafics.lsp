@@ -26,7 +26,7 @@
     (print (caddr (car mapa)))
     
     ; Mapa
-    (imprimir-files (cdr mapa) 0 10)
+    (imprimir-files (cdr mapa) 0 10) ; mapa fila mida, esta a 10 para que sea mas bonito, pero recomiendo ponerlo a 6 para mapas grandes, ya que si no no se vera.
     (color 0 0 0)
 )
 
@@ -35,7 +35,7 @@
     (cond
         ((null mapa) nil)
         (t
-            (move 30 (+ 30 (* fila mida)))
+            (move 270 (+ 30 (* fila mida)))
             (imprimir-fila (car mapa) 0 mida)
             (imprimir-files (cdr mapa) (+ fila 1) mida)
         )

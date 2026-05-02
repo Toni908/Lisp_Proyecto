@@ -66,7 +66,6 @@
 ;; Inicio, el monitor recursivo sera monitor, empezaremos con una array de estados  
 ;; generales que sera ronda pintura e1 pintura e2, y el mapa
 (defun inici ()
-    (make-random-state t)
     ;(dribble "debug.txt")
     ;(comptar-labs (cons (list 1 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0)))
     (monitor (cons (list 0 200 200 (random 1000) (random 1000)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
@@ -103,8 +102,10 @@
     (let* ((equip (equip-actual mapa))
            (labs (comptar-labs mapa))
            (labs-equip (cond ((equal equip 'e1) (car labs))
-                             (t (cadr labs))))
-           (nou-estat (cond 
+                             (t (cadr labs)))
+           )
+           (nou-estat 
+              (cond 
                ((equal equip 'e1)
                 (list (+ 1 (torn mapa))
                       (+ (estat-pintura-e1 mapa) 2 labs-equip)
@@ -116,7 +117,9 @@
                       (estat-pintura-e1 mapa)
                       (+ (estat-pintura-e2 mapa) 2 labs-equip)
                       (estat-dx mapa)
-                      (estat-dy mapa)))))
+                      (estat-dy mapa)))
+               )
+            )
            (mapa-v2 (decrementar-cooldowns (cons nou-estat (cdr mapa)) equip))
            
            )
@@ -179,7 +182,8 @@
     ((equal (car accio) 'mou)
      (aplicar-mou mapa (cadr accio) unitat))
 
-    (t mapa))
+    (t mapa)
+  )
 )
 
 ; buscar-celda: busca una celda al mapa per coordenada real
@@ -189,20 +193,27 @@
 (defun-tco buscar-celda (coord celdas)
     (cond ((null celdas) nil)
           ((equal coord (celda-coord (car celdas))) (car celdas))
-          (t (buscar-celda coord (cdr celdas)))))
+          (t (buscar-celda coord (cdr celdas)))
+    )
+)
 
 ; substituir-celda-fila: substitueix una celda dins una fila
-(defun substituir-celda-fila (coord nova-celda fila)
-    (cond ((null fila) nil)
-          ((equal coord (celda-coord (car fila)))
-           (cons nova-celda (cdr fila)))
-          (t (cons (car fila) (substituir-celda-fila coord nova-celda (cdr fila))))))
+(defun-tco substituir-celda-fila (coord nova-celda fila &optional (acc nil))
+    (cond
+        ((null fila) (reverse acc))
+        ((equal coord (celda-coord (car fila)))
+         (substituir-celda-fila coord nova-celda (cdr fila) (cons nova-celda acc)))
+        (t (substituir-celda-fila coord nova-celda (cdr fila) (cons (car fila) acc)))
+    )
+)
 
 ; substituir-celda: substitueix una celda al mapa per una nova
-(defun substituir-celda (coord nova-celda mapa)
-    (cond ((null mapa) nil)
-          (t (cons (substituir-celda-fila coord nova-celda (car mapa))
-                   (substituir-celda coord nova-celda (cdr mapa))))))
+(defun-tco substituir-celda (coord nova-celda mapa &optional (acc nil))
+    (cond
+        ((null mapa) (reverse acc))
+        (t (substituir-celda coord nova-celda (cdr mapa) (cons (substituir-celda-fila coord nova-celda (car mapa)) acc)))
+    )
+)
 
 ; aplicar-crea-bolla: crea una bolla nova al mapa
 ; Paràmetres:
@@ -258,12 +269,12 @@
                 mapa-final))))) 
 
 (defun aplicar-pinta (mapa args unitat)
-  (let* ((coord-dst (coord-real args mapa))
-         (coord-src (coord-real (cadr (cddddr unitat)) mapa))
-         (celdas (celdas-mapa (cdr mapa)))
-         (celda-dst (buscar-celda coord-dst celdas))
-         (celda-src (buscar-celda coord-src celdas))
-         (equip-pinta (cadr unitat)))
+    (let* ((coord-dst (coord-real args mapa))
+            (coord-src (coord-real (cadr (cddddr unitat)) mapa))
+            (celdas (celdas-mapa (cdr mapa)))
+            (celda-dst (buscar-celda coord-dst celdas))
+            (celda-src (buscar-celda coord-src celdas))
+            (equip-pinta (cadr unitat)))
 
     (cond
       ((null celda-dst) mapa)
@@ -296,7 +307,9 @@
                         (celda-colors-pintat-base celda-dst))
                        (t
                         (cons color (celda-colors-pintat-base celda-dst)))))
-                    (t nil)))
+                    (t nil)
+                )
+            )
 
               (nova-celda
                (cond
@@ -336,7 +349,9 @@
                         (celda-coord celda-dst)))
                  (t
                   (append (list (car celda-dst) nou-color-suelo)
-                          (cddr celda-dst)))))
+                          (cddr celda-dst)))
+                )
+               )
 
               (mapa-v2 (substituir-celda coord-dst nova-celda (cdr mapa)))
 
@@ -358,9 +373,15 @@
                       (celda-tr-moure-bolla celda-src)
                       (celda-coord celda-src)))
 
-              (mapa-final (substituir-celda coord-src nova-unitat-src mapa-v2)))
+              (mapa-final (substituir-celda coord-src nova-unitat-src mapa-v2))
+         )
 
-         (cons (car mapa) mapa-final))))))
+         (cons (car mapa) mapa-final)
+         )
+        )
+    )
+  )
+)
 
 ; aplicar-mou: mou una bolla a una nova casella
 ; Paràmetres:
@@ -405,7 +426,10 @@
                           coord-dst))
                 (mapa-v2 (substituir-celda coord-src celda-src-buida (cdr mapa)))
                 (mapa-v3 (substituir-celda coord-dst nova-bolla mapa-v2)))
-                (cons (car mapa) mapa-v3))))))
+                (cons (car mapa) mapa-v3)))
+        )
+    )
+)
 
 ; ------------------------------------------------------------------
 ; Inici de mapa, metadatos per poder treballar millor
@@ -460,34 +484,47 @@
 
 (defun decrementar-cooldowns (mapa equip)
   (cons (car mapa) ; mantenemos el estado
-        (decrementar-filas (cdr mapa) equip)))
+        (decrementar-filas (cdr mapa) equip)
+  )
+)
 
-(defun decrementar-filas (mapa equip)
-  (cond
-    ((null mapa) nil)
-    (t (cons (decrementar-celdas (car mapa) equip)
-             (decrementar-filas (cdr mapa) equip)))))
-
-(defun decrementar-celdas (fila equip)
+(defun-tco decrementar-filas (mapa equip &optional (acc nil))
     (cond
-        ((null fila) nil)
-        (t (cons
-            (let* ((celda (car fila)))
-                (cond
-                    ((and (pertany 'bolla celda)
-                          (equal (celda-equip celda) equip)) ; si es bolla y de nuestro equipo activo
-                     (list (car celda)                        ; terra
-                           (cadr celda)                       ; color
-                           (caddr celda)                      ; bolla
-                           (cadddr celda)                     ; equip
-                           (celda-color-propi-bolla celda)    ; color-propi
-                           (celda-colors-pintat-bolla celda)  ; colors-pintat
-                           (celda-id-bolla celda)             ; id
-                           (max 0 (- (celda-tr-pintar-bolla celda) 1)) ; tr-pintar
-                           (max 0 (- (celda-tr-moure-bolla celda) 1.0))  ; tr-moure 
-                           (celda-coord celda)))              ; coord
-                    (t celda)))
-            (decrementar-celdas (cdr fila) equip))
+        ((null mapa) (reverse acc))
+        (t (decrementar-filas
+                (cdr mapa)
+                equip
+                (cons (decrementar-celdas (car mapa) equip) acc)))
+    )
+)
+
+(defun-tco decrementar-celdas (fila equip &optional (acc nil))
+    (cond
+        ((null fila) (reverse acc))
+        (t (decrementar-celdas
+            (cdr fila)
+            equip
+            (cons
+                (let* ((celda (car fila)))
+                    (cond
+                        ((and (pertany 'bolla celda)
+                              (equal (celda-equip celda) equip)
+                         )
+                         (list (car celda)
+                               (cadr celda)
+                               (caddr celda)
+                               (cadddr celda)
+                               (celda-color-propi-bolla celda)
+                               (celda-colors-pintat-bolla celda)
+                               (celda-id-bolla celda)
+                               (max 0 (- (celda-tr-pintar-bolla celda) 1))
+                               (max 0 (- (celda-tr-moure-bolla celda) 1.0))
+                               (celda-coord celda))
+                        )
+                        (t celda)
+                    )
+                )
+                acc))
         )
     )
 )
@@ -499,18 +536,20 @@
     (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
 )
 
-(defun compta-labs-e (mapa x)
-    (cond ((null mapa) 0)
-          (t (+ (compta-labs-files (car mapa) x) (compta-labs-e (cdr mapa) x)))
-    )    
+(defun-tco compta-labs-e (mapa x &optional (acc 0))
+    (cond
+        ((null mapa) acc)
+        (t (compta-labs-e (cdr mapa) x (+ acc (compta-labs-files (car mapa) x))))
+    )
 )
 
-(defun compta-labs-files (fila x)
-    (cond ((null fila) 0)
-          ((and (equal (caddr (car fila)) 'lab) 
-                (equal (cadddr (car fila)) x))
-           (+ 1 (compta-labs-files (cdr fila) x)))
-          (t (compta-labs-files (cdr fila) x))
+(defun-tco compta-labs-files (fila x &optional (acc 0))
+    (cond
+        ((null fila) acc)
+        ((and (equal (caddr (car fila)) 'lab)
+              (equal (cadddr (car fila)) x))
+         (compta-labs-files (cdr fila) x (+ acc 1)))
+        (t (compta-labs-files (cdr fila) x acc))
     )
 )
 
@@ -533,7 +572,7 @@
 ;; Paràmetres:
 ;;   celdas - llista plana de totes les celdas del mapa
 ;;   equip  - 'e1 o 'e2
-(defun te-base-al-mapa (celdas equip)
+(defun-tco te-base-al-mapa (celdas equip)
     (cond
         ((null celdas) nil)
         ((and (equal (celda-tipus (car celdas)) 'base)
@@ -548,7 +587,9 @@
 (defun-tco te-base (unitats-equip)
     (cond ((null unitats-equip) nil)
           ((equal (car (cddddr (car unitats-equip))) 'base) t) ;; cogemos la primera unidad, miram la columna tipus y veim si es base
-          (t (te-base (cdr unitats-equip)))))   ;; sino seguimo cercant fins que no hi hagui mes unitats
+          (t (te-base (cdr unitats-equip))) ;; sino seguimo cercant fins que no hi hagui mes unitats;; sino seguimo cercant fins que no hi hagui mes unitats
+    )
+)   
 
 
 ; mostra-guanyador: determina i mostra el guanyador
@@ -578,34 +619,43 @@
                             (t 'e2))))))
         (princ "Fi de partida, el guanyador es: ")
         (print guanyador)
-        guanyador))
+        guanyador
+    )
+)
 
 ; compta-bolles: compta les bolles vives d'un equip
 ; Paràmetres:
 ;   unitats-equip - llista d'unitats d'un equip
-(defun compta-bolles (unitats-equip)
+(defun-tco compta-bolles (unitats-equip)
     (cond ((null unitats-equip) 0)
           ((equal (car (cddddr (car unitats-equip))) 'bolla)
            (+ 1 (compta-bolles (cdr unitats-equip))))
-          (t (compta-bolles (cdr unitats-equip)))))
+          (t (compta-bolles (cdr unitats-equip)))
+    )
+)
 
 ;------------------------------------------------------------------------------------------------   
 ; funcions per construir l'array esta a partir del mapa
 
 ; trobar-unitats-llista: filtra les celdas que son unitats
-(defun trobar-unitats-llista (celdas mapa equip)
-    (cond ((null celdas) nil)
-          ((and (es-unitat (car celdas))
-                (equal (get-equip-celda (car celdas)) equip))
-           (cons (celda-a-unitat (car celdas) mapa)
-                 (trobar-unitats-llista (cdr celdas) mapa equip)))
-          (t (trobar-unitats-llista (cdr celdas) mapa equip))))
+(defun-tco trobar-unitats-llista (celdas mapa equip &optional (acc nil))
+    (cond
+        ((null celdas) (reverse acc))
+        ((and (es-unitat (car celdas))
+              (equal (get-equip-celda (car celdas)) equip))
+         (trobar-unitats-llista (cdr celdas) mapa equip
+                (cons (celda-a-unitat (car celdas) mapa) acc)))
+        (t (trobar-unitats-llista (cdr celdas) mapa equip acc))
+    )
+)
 
 ; es-unitat: comprova si una celda té una unitat (base o bolla)
 (defun es-unitat (celda)
     (cond ((pertany 'base celda) t)
           ((pertany 'bolla celda) t)
-          (t nil)))
+          (t nil)
+    )
+)
 
 
 ; trobar-unitats: retorna ((unitats-e1) (unitats-e2))
@@ -613,12 +663,15 @@
     (let* ((celdas (celdas-mapa (cdr mapa))))
         (list
             (trobar-unitats-llista celdas mapa 'e1)
-            (trobar-unitats-llista celdas mapa 'e2))))
+            (trobar-unitats-llista celdas mapa 'e2)
+        )
+    )
+)
 
 ; celdas-mapa: podria llamarlo aplanar mapa, ya que me lo aplana todo en una lista para poder buscar mas facilmente
-(defun celdas-mapa (mapa)
-    (cond ((null mapa) nil)
-          (t (append (car mapa) (celdas-mapa (cdr mapa))))
+(defun-tco celdas-mapa (mapa &optional (acc nil))
+    (cond ((null mapa) (reverse acc))
+          (t (celdas-mapa (cdr mapa) (append (car mapa) acc)))
     )
 )
 
@@ -646,7 +699,9 @@
                   (t (celda-tr-pintar-bolla celda)))                ;              pos 8 si bolla
             (cond (base nil)                                        ; 10. tr-moure - nil si base
                   (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
-            (calcular-visio (celda-coord celda) tipus mapa))))      ; 11. visio 
+            (calcular-visio (celda-coord celda) tipus mapa))        ; 11. visio 
+    )
+)     
 
 (defun celda-a-visio (celda mapa)
     (let* ((tipus (car celda)))
@@ -656,26 +711,37 @@
              (list (coord-amb-desplacament (celda-coord celda) mapa) 'aigua))
             ; Terra
             (t (let* ((color (cadr celda))
-                      (element (caddr celda)))
-                (cond
-                    ; Terra buida: el tercer element es una llista (la coordenada)
-                    ((listp element)
-                     (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color))
-                    ; Terra amb lab
-                    ((equal element 'lab)
-                     (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
-                           'lab (cadddr celda)))
-                    ; Terra amb base
-                    ((equal element 'base)
-                     (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
-                           'base (celda-equip celda) (celda-colors-pintat-base celda) nil nil nil))
-                    ; Terra amb bolla
-                    ((equal element 'bolla)
-                     (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
-                           'bolla (celda-equip celda) (celda-colors-pintat-bolla celda)
-                           (celda-color-propi-bolla celda)
-                           (celda-tr-pintar-bolla celda)
-                           (celda-tr-moure-bolla celda)))))))))
+                      (element (caddr celda))
+                     )
+                    (cond
+                        ; Terra buida: el tercer element es una llista (la coordenada)
+                        ((listp element)
+                         (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color)
+                        )
+                        ; Terra amb lab
+                        ((equal element 'lab)
+                         (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
+                               'lab (cadddr celda))
+                        )
+                        ; Terra amb base
+                        ((equal element 'base)
+                         (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
+                               'base (celda-equip celda) (celda-colors-pintat-base celda) nil nil nil)
+                        )
+                        ; Terra amb bolla
+                        ((equal element 'bolla)
+                         (list (coord-amb-desplacament (celda-coord celda) mapa) 'terra color
+                               'bolla (celda-equip celda) (celda-colors-pintat-bolla celda)
+                               (celda-color-propi-bolla celda)
+                               (celda-tr-pintar-bolla celda)
+                               (celda-tr-moure-bolla celda))
+                        )
+                    )
+                )
+            )
+        )
+    )
+)
 
 ; calcular-visio: retorna la llista de celdas visibles per una unitat
 ; Paràmetres:
@@ -687,18 +753,23 @@
                        (t 20)))
            (celdas (celdas-mapa (cdr mapa)))
            (celdas-visibles (celdas-en-rang coord-real rang celdas)))
-        (mapcar (lambda (c) (celda-a-visio c mapa)) celdas-visibles)))
+        (mapcar (lambda (c) (celda-a-visio c mapa)) celdas-visibles)
+    )
+)
 
 ; celdas-en-rang: retorna totes les celdas del mapa dins del rang d'una coordenada
 ; Paràmetres:
 ;   coord  - coordenada real (x y) de la unitat
 ;   rang   - rang màxim de visió (20 per bolla, 64 per base)
 ;   celdas - llista plana de totes les celdas del mapa
-(defun celdas-en-rang (coord rang celdas)
-    (cond ((null celdas) nil)
-          ((<= (d2 coord (celda-coord (car celdas))) rang)
-           (cons (car celdas) (celdas-en-rang coord rang (cdr celdas))))
-          (t (celdas-en-rang coord rang (cdr celdas)))))
+(defun-tco celdas-en-rang (coord rang celdas &optional (acc nil))
+    (cond
+        ((null celdas) (reverse acc))
+        ((<= (d2 coord (celda-coord (car celdas))) rang)
+         (celdas-en-rang coord rang (cdr celdas) (cons (car celdas) acc)))
+        (t (celdas-en-rang coord rang (cdr celdas) acc))
+    )
+)
 
 ; d2: calcula la distancia euclidiana al quadrat entre dos coordenades
 ; Paràmetres:
@@ -706,7 +777,9 @@
 ;   coord-b - llista (x y)
 (defun d2 (coord-a coord-b)
     (+ (* (- (car coord-a) (car coord-b)) (- (car coord-a) (car coord-b)))
-       (* (- (cadr coord-a) (cadr coord-b)) (- (cadr coord-a) (cadr coord-b)))))
+       (* (- (cadr coord-a) (cadr coord-b)) (- (cadr coord-a) (cadr coord-b)))
+    )
+)
 
 ;----------------------------------------------------------------------------------------
 ;Per treballar amb el desplazament
@@ -760,5 +833,7 @@
 (defun-tco pertany (x l)
     (cond ((null l) nil)
           ((equal x (car l)) t)
-          (t (pertany x (cdr l)))))
+          (t (pertany x (cdr l)))
+    )
+)
 
