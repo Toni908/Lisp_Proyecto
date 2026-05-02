@@ -77,7 +77,7 @@
 ;; Inicialitza l'estat global amb torn 0, 200 de pintura per equip i un desplaçament
 ;; aleatori, construeix el mapa amb meta-informació i arranca el bucle principal.
 (defun inici ()
-    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp nombre-mapa) 0))) 
+    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp "maps/basic1.map") 0))) ;; mapa a elegir
 )
 
 ;; llegeix-exp: llegeix una expressió LISP d'un fitxer de text i la retorna.
@@ -85,7 +85,7 @@
 ;; Paràmetres:
 ;;   nom-fitxer - path del fitxer a llegir
 (defun llegeix-exp (nom-fitxer)
-    (let* ((fp (open "maps/basic1.map"))      ;; mapa a elegir
+    (let* ((fp (open nom-fitxer))      
            (e (read fp nil nil)))
         (close fp)
         e)
