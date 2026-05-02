@@ -100,14 +100,24 @@
         (t
             (let* ((tecla (get-key)))
                 (cond
-                    ((= tecla 333) (monitor (fer-torn mapa)))
-                    ((= tecla 336) (cls))
+                    ((= tecla 328) (monitor (fer-n-torns mapa 10)))   ; flecha arriba avanza de 10 en 10
+                    ((= tecla 333) (monitor (fer-torn mapa)))   ; flecha derecha avanza de 1 en 1
+                    ((= tecla 336) (cls))                       ; flecha abajo finaliza
                     (t (monitor mapa))
                 )
             )
         )
     )
 )
+
+;; fer-n-torns: funcion auxiliar para hacer x turnos
+;; Paràmetres: 
+;;   mapa:  mapa actual
+;;   n:      turnos que queremos hacer
+(defun-tco fer-n-torns (mapa n)
+    (cond
+        ((= n 0) mapa)
+        (t (fer-n-torns (fer-torn mapa) (- n 1)))))
 
 ;; fer-torn: calcula el nou estat del mapa per al torn actual.
 ;; Incrementa el torn, afegeix pintura a l'equip actiu (2 base + 1 per cada lab capturat),
@@ -150,6 +160,8 @@
         (processar-unitats mapa unitats-equip equip)
     )
 )
+
+
 
 ;; processar-unitats: itera sobre totes les unitats d'un equip, demana les accions
 ;; a la IA per a cada una i les aplica al mapa seqüencialment.
@@ -575,12 +587,19 @@
 )
 
 ;-------------------------------------------------------------------------------
-; cuenta laboratorios del mapa, y devuelve un array de (numero_lab_e1, numero_lab_e2)
+; contadors de laboratis
 
+; comptar-labs: recorre el mapa en cerca de els laboratoris, retorna una llista amb
+; els laboratoris del equip1 y equip2 (e1, e2)
+; Paràmetres:
+;   mapa: mapa actual.
 (defun comptar-labs (mapa)
     (list (compta-labs-e (cdr mapa) 'e1) (compta-labs-e (cdr mapa) 'e2)) ; cdr mapa para quitar los metadatos primeros
 )
 
+; comptar-labs: separa les files per usarles en comptar-labs-files
+;   mapa: mapa actual.
+;   x: fila actual
 (defun-tco compta-labs-e (mapa x &optional (acc 0))
     (cond
         ((null mapa) acc)
@@ -588,6 +607,10 @@
     )
 )
 
+; comptar-labs-files: agafa les celdas i conta si te laboratoris.
+; Paràmetres: 
+;   fila: fila actual.
+;   x: indice.
 (defun-tco compta-labs-files (fila x &optional (acc 0))
     (cond
         ((null fila) acc)
@@ -748,6 +771,13 @@
     )
 )     
 
+;; celda-a-visio: converteix una celda interna del mapa al format de visió que rep la IA.
+;; Elimina la meta-informació interna (coordenades reals, ids...) i retorna només
+;; el que una unitat pot "veure": posició amb desplaçament, tipus de terreny, color,
+;; i informació de l'element que hi ha (si n'hi ha).
+;; Paràmetres:
+;;   celda - la cel·la interna del mapa
+;;   mapa  - el mapa complet (necessari per aplicar el desplaçament a la coordenada)
 (defun celda-a-visio (celda mapa)
     (let* ((tipus (car celda)))
         (cond

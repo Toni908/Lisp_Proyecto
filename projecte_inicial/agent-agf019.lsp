@@ -36,9 +36,8 @@
 
 (setq rs (make-random-state t)) ;; Inicialització de l'estat aleatori
 
-;; ============================================================
-;; PUNT D'ENTRADA PRINCIPAL
-;; ============================================================
+;; ------------------------------------------------------------
+;; Punt d'entrada Principal
 
 ;; agent-agf019: funció principal que el controlador crida per cada unitat
 ;; Paràmetres:
@@ -55,9 +54,8 @@
 )
 
 
-;; ============================================================
-;; ACCESSORS DE LES DADES DE LA UNITAT
-;; ============================================================
+;; ------------------------------------------------------------
+;; Dades de la unitat
 
 ;; agent-agf019-ronda: retorna la ronda actual
 (defun agent-agf019-ronda (dades) (car dades))
@@ -93,9 +91,8 @@
 (defun agent-agf019-visio (dades) (caddr (cddddr (cddddr dades))))
 
 
-;; ============================================================
-;; ACCESSORS DE LES CASELLES DE LA VISIÓ
-;; ============================================================
+;; ------------------------------------------------------------
+;; Dades de la visio
 
 ;; agent-agf019-cas-coord: coordenada d'una casella de la visió
 (defun agent-agf019-cas-coord (cas) (car cas))
@@ -127,9 +124,8 @@
           (t nil)))
 
 
-;; ============================================================
-;; FUNCIONS AUXILIARS GENERALS
-;; ============================================================
+;; ------------------------------------------------------------
+;; Funcions auxiliars generals
 
 ;; agent-agf019-longitud: longitud d'una llista
 ;; Paràmetres:
@@ -167,9 +163,8 @@
               (t 'b))))
 
 
-;; ============================================================
-;; LÒGICA DE LA BASE
-;; ============================================================
+;; ----------------------------------------------------------
+;; Lògica de la base
 
 ;; agent-agf019-accions-base: retorna les accions de la base
 ;; La base crea una bolla si té >= 50 de pintura i hi ha espai adjacent.
@@ -219,9 +214,8 @@
 )
 
 
-;; ============================================================
-;; LÒGICA DE LA BOLLA
-;; ============================================================
+;; ------------------------------------------------------------
+;; Lògica de la bolla
 
 ;; agent-agf019-accions-bolla: retorna les accions de la bolla
 ;; Lògica:
@@ -414,14 +408,22 @@
         (agent-agf019-rotar-llista offset
             (list
                 (list  1  0) (list  1  1) (list  0  1) (list -1  1)
-                (list -1  0) (list -1 -1) (list  0 -1) (list  1 -1)))))
+                (list -1  0) (list -1 -1) (list  0 -1) (list  1 -1)
+            )
+        )
+    )
+)
 
 ;; agent-agf019-rotar-llista: rota una llista n posicions cap a l'esquerra
 (defun agent-agf019-rotar-llista (n l)
     (cond ((= n 0) l)
           (t (agent-agf019-rotar-llista
                 (- n 1)
-                (append (cdr l) (list (car l)))))))
+                (append (cdr l) (list (car l)))
+              )
+          )
+    )
+)
 
 ;; agent-agf019-accions-moviment-normal: prova les 8 direccions sistemàticament
 ;; començant per una aleatòria
@@ -470,7 +472,9 @@
             (let* ((color-sol (agent-agf019-cas-color-casella cas-dest))
                    (cal-pintar-sol (and pot-pintar
                                         (not (equal color-sol color-propi))
-                                        (<= (agent-agf019-d2 coord dest) 5))))
+                                        (<= (agent-agf019-d2 coord dest) 5))
+                   )
+                  )
                 (cond
                     (cal-pintar-sol (list (list 'pinta dest) (list 'mou dest)))
                     (t (list (list 'mou dest)))
@@ -498,7 +502,10 @@
            (sx (agent-agf019-signe dx))
            (sy (agent-agf019-signe dy)))
         (list (+ (car origen) sx)
-              (+ (cadr origen) sy))))
+              (+ (cadr origen) sy)
+        )
+    )
+)
 
 ;; agent-agf019-signe: retorna -1, 0 o 1 segons el signe d'un nombre
 ;; Paràmetres:
@@ -506,7 +513,9 @@
 (defun agent-agf019-signe (n)
     (cond ((> n 0)  1)
           ((< n 0) -1)
-          (t        0)))
+          (t        0)
+    )
+)
 
 ;; agent-agf019-buscar-casella: busca una casella a la visió per coordenada
 ;; Paràmetres:
@@ -516,4 +525,6 @@
     (cond
         ((null visio) nil)
         ((equal coord (agent-agf019-cas-coord (car visio))) (car visio))
-        (t (agent-agf019-buscar-casella coord (cdr visio)))))
+        (t (agent-agf019-buscar-casella coord (cdr visio)))
+    )
+)
