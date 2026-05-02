@@ -29,7 +29,7 @@
 (load 'agent-agf019_2)
 
 (setq nombre-mapa "maps/basic1.map")    ;; Que mapa?
-(setq MAX-TORNS 500)                   ;; TORNS-MAXIMS
+(setq MAX-TORNS 1500)                   ;; TORNS-MAXIMS
 (setq rs (make-random-state t))         ;; Inicialització de l'estat aleatori
 
 ; --------------- TESTS ---------------------
@@ -193,8 +193,8 @@
         (t
             (let* ((unitat (car unitats))
                    (accions (cond
-                                ((equal equip 'e1) (agent-agf019 unitat))
-                                (t (agent-agf019 unitat))))   ; demanam accions a la IA
+                                ((equal equip 'e1) (agent-agf019 unitat))           ; equipo 1
+                                (t (agent-agf019_2 unitat))))                       ; equipo 2 (tonto) 
                    (mapa-v2 (aplicar-accions-unitat mapa accions unitat))
                   )
                 (processar-unitats mapa-v2 (cdr unitats) equip)
@@ -318,8 +318,8 @@
                 (mapa-v2 (cons nou-estat (substituir-celda coord-dst nova-bolla (cdr mapa))))
                 (unitat-nova (celda-a-unitat nova-bolla mapa-v2))
                 (accions (cond
-                    ((equal equip 'e1) (agent-agf019 unitat-nova))
-                    (t (agent-agf019 unitat-nova))))
+                    ((equal equip 'e1) (agent-agf019 unitat-nova))                      ; equipo 1
+                    (t (agent-agf019_2 unitat-nova))))                                  ; equipo 2 (tonto) 
                 (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
                 mapa-final))))) 
 

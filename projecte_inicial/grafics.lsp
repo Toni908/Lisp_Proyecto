@@ -182,13 +182,19 @@
     (moverel (/ mida 2) 0)
     (cercle-fill mida)
 
-    (color 0 0 0)
+    (color-equip casella)
     (drawrel (/ mida 2) (/ mida 2))
     (drawrel (- (/ mida 2)) (/ mida 2))
     (drawrel (- (/ mida 2)) (- (/ mida 2)))
     (drawrel (/ mida 2) (- (/ mida 2)))
 
     (moverel (- (/ mida 2)) 0) ; restaurar posición
+)
+
+(defun color-equip (casella)
+    (cond ((equal (celda-equip casella) 'e1) (color 0 0 0))  
+          (t (color 255 255 0))
+    )
 )
 
 ; rellena el rombo
