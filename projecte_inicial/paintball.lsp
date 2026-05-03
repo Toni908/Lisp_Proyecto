@@ -25,6 +25,20 @@
 ;; Per a cambiar el mapa, anar a la funcio llegeix-exp, alla explica on cambiar el nom del mapa
 ;; Per a cambiar el nombre de torns, anar a fi-partida-mapa, haya es troba el nombre maxim de torns
 ;; de base es 1500.
+;; En grafics, la funcion principal pinta, que es la qual pasam el mapa y imprimeix
+;; te una funcio anomenada imprimir-files, on posa el numero de pixels dels quadrats (base y altura)
+;; de normal esta a 10 ya que aixi es veu molt millor, pero si vols usar mapes grosos es deura
+;; usar amb 6, per a que i hagui espai.
+;;
+;; == Mapas Jugables ==
+;; Tots els mapes son jugables, pero amb les seguents condicions:
+;; -  Necesari mida 2 per a huge100 y huge90 per a poder veurelo enter. Rendiment Pessim.
+;; -  Necesari mida 4 per a huge80 y huge70 per a poder veurelo enter. Rendiment Dolent
+;; -  Els mapes grosos que no superin aquesta cuantitat de cuadrats, es poden veure amb
+;;    mida 6, el rendiment decreix amb la grandaria del mapa y el nombre de bolles.
+;; -  Per a mapas normals, (l'unics que es poden guanyar per que la ia no es molt 
+;;    inteligent) recommand mina 10, per a que se vegi be tot.
+;; A partir de mida 4, no es veu be les marques a bases y bolles.
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -77,7 +91,7 @@
 ;; Inicialitza l'estat global amb torn 0, 200 de pintura per equip i un desplaçament
 ;; aleatori, construeix el mapa amb meta-informació i arranca el bucle principal.
 (defun inici ()
-    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp "maps/basic1.map") 0))) ;; mapa a elegir
+    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp "maps/notalaberith.map") 0))) ;; mapa a elegir
 )
 
 ;; llegeix-exp: llegeix una expressió LISP d'un fitxer de text i la retorna.

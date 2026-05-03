@@ -105,23 +105,30 @@
 ;; agent-agf019-cas-tipus-element: tipus d'element a la casella (nil, 'lab, 'base, 'bolla)
 (defun agent-agf019-cas-tipus-element (cas)
     (cond ((>= (agent-agf019-longitud cas) 4) (cadddr cas))
-          (t nil)))
+          (t nil)
+    )
+)
 
 ;; agent-agf019-cas-equip: equip que controla l'element (nil si no hi ha o lab no capturat)
 (defun agent-agf019-cas-equip (cas)
     (cond ((>= (agent-agf019-longitud cas) 5) (car (cddddr cas)))
-          (t nil)))
+          (t nil)
+    )
+)
 
 ;; agent-agf019-cas-colors-pintat: colors pintats de l'element
 (defun agent-agf019-cas-colors-pintat (cas)
     (cond ((>= (agent-agf019-longitud cas) 6) (cadr (cddddr cas)))
-          (t nil)))
+          (t nil)
+    )
+)
 
 ;; agent-agf019-cas-color-propi-bolla: color propi de la bolla
 (defun agent-agf019-cas-color-propi-bolla (cas)
     (cond ((>= (agent-agf019-longitud cas) 7) (caddr (cddddr cas)))
-          (t nil)))
-
+          (t nil)
+    )
+)
 
 ;; ------------------------------------------------------------
 ;; Funcions auxiliars generals
@@ -131,7 +138,9 @@
 ;;   l - la llista
 (defun agent-agf019-longitud (l)
     (cond ((null l) 0)
-          (t (+ 1 (agent-agf019-longitud (cdr l))))))
+          (t (+ 1 (agent-agf019-longitud (cdr l))))
+    )
+)
 
 ;; agent-agf019-pertany: comprova si x pertany a la llista l
 ;; Paràmetres:
@@ -140,7 +149,9 @@
 (defun agent-agf019-pertany (x l)
     (cond ((null l) nil)
           ((equal x (car l)) t)
-          (t (agent-agf019-pertany x (cdr l)))))
+          (t (agent-agf019-pertany x (cdr l)))
+    )
+)
 
 ;; agent-agf019-d2: distància euclidiana al quadrat entre dues coordenades
 ;; Paràmetres:
@@ -148,7 +159,9 @@
 ;;   b - coordenada (x y)
 (defun agent-agf019-d2 (a b)
     (+ (* (- (car a) (car b)) (- (car a) (car b)))
-       (* (- (cadr a) (cadr b)) (- (cadr a) (cadr b)))))
+       (* (- (cadr a) (cadr b)) (- (cadr a) (cadr b)))
+    )
+)
 
 ;; agent-agf019-color-seguent: alterna el color segons la ronda i l'id
 ;; Estratègia: usa (ronda + id) mod 3 per variar el color entre creacions
@@ -159,7 +172,10 @@
     (let* ((n (random 3 rs)))
         (cond ((= n 0) 'r)
               ((= n 1) 'g)
-              (t 'b))))
+              (t 'b)
+        )
+    )
+)
 
 
 ;; ----------------------------------------------------------

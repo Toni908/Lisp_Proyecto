@@ -1,14 +1,18 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
-;; Estudiants: ABC, XYZ.
-;; Professor: XXX.
+;; Estudiants: Antonio Garcia Font.
+;; Professor: Miquel Cabot.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del mòdul gràfic.
-;; <Descripció de les funcions d'aquest fitxer>
 
-;; Documentació d'això...
-
-;; DOCUMENTACIÓ DE LES FUNCIONS GRÀFIQUES
+;; == Descripció general ==
+;; Aquest archiu te la funcio principal pinta, que pinta un estat del mapa, la qual
+;; es pasa per parametre.
+;;
+;; == Dades Modificables ==
+;; -  La dada modificable mes important es mida, a la linea 42, definira la mida del
+;;    costat dels quadrats, tot depen d'allo, aquesta mida pot ser modificable
+;;    per a poder veure els mapes mes grosos.
 
 ;; pinta: Genera la interfície visual principal.
 ;; Paràmetres:
@@ -38,7 +42,7 @@
     (print "Flecha abaix: Apagar Joc")
     
     ; Mapa
-    (imprimir-files (cdr mapa) 0 10) ;; mapa fila mida, la mida es important, per a mapas grosos deuria ser 6
+    (imprimir-files (cdr mapa) 0 6) ;; mapa fila mida, la mida es important, per a mapas grosos deuria ser 6 tot sol pot ser par el numero
     (color 0 0 0)
 )
 
@@ -51,7 +55,7 @@
     (cond
         ((null mapa) nil)
         (t
-            (move 270 (+ 30 (* fila mida)))
+            (move 265 (+ 10 (* fila mida)))
             (imprimir-fila (car mapa) 0 mida)
             (imprimir-files (cdr mapa) (+ fila 1) mida)
         )
