@@ -2,13 +2,14 @@
 ;; LISP - Paintball.
 ;; Estudiants: Antonio Garcia Font.
 ;; Professor: Miquel Cabot.
+;; Assignatura: 21721 – Llenguatges de Programació.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del controlador principal.
 
 ;; == Descripció general ==
 ;; Aquest fitxer representa la logica del joc, exterioritzant el apartat grafic
 ;; y la ia. El joc inclou els seguents apartats del joc:
-;; - Suelo amb pintures: El terra del joc es pot pintar de colors, una bolla que camini a una casella
+;; - Suelo amb pintures: El terra del joc es pot pintar per les bolles del seu color, una bolla que camini a una casella
 ;;   que no sigui del seu color tendra una penalitzacio de *3 al seu cooldown de moure-se.
 ;;   Si una bolla dispara desde una casella que no es del seu color tendra un *3 al cooldown de disparar.
 ;; - Accepta mapas de tamany maxim.
@@ -38,10 +39,15 @@
 ;;    mida 6, el rendiment decreix amb la grandaria del mapa y el nombre de bolles.
 ;; -  Per a mapas normals, (l'unics que es poden guanyar per que la ia no es molt 
 ;;    inteligent) recommand mina 10, per a que se vegi be tot.
-;; A partir de mida 4, no es veu be les marques a bases y bolles.
+;; A partir de mida 4, no es veu be res.
 ;;
 ;; == IA ==
 ;; Si es vol cambiar la ia, es troba en el load y en la linea 223 224 y 370 y 371.
+;;
+;; == USO DE IA GENERATIVAS == 
+;; Se ha utilizado Claude como IA generativa con el objetivo de tener orientacion a ciertas
+;; funciones que han presentado especial dificultad como es el caso de la funcion (aplicar-pinta)
+;; esto se aplica a todos los archivos.
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -94,7 +100,7 @@
 ;; Inicialitza l'estat global amb torn 0, 200 de pintura per equip i un desplaçament
 ;; aleatori, construeix el mapa amb meta-informació i arranca el bucle principal.
 (defun inici ()
-    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp "maps/notalaberith.map") 0))) ;; mapa a elegir
+    (monitor (cons (list 1 200 200 (random 1000 rs) (random 1000 rs)) (iniciar-mapa (llegeix-exp "maps/basic2.map") 0))) ;; mapa a elegir
 )
 
 ;; llegeix-exp: llegeix una expressió LISP d'un fitxer de text i la retorna.

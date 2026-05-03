@@ -1,8 +1,8 @@
 ;; Pràctica final de Llenguatges de Programació.
 ;; LISP - Paintball.
-;; Estudiant: Antonio Garcia Font
-;; Professor: Antoni Oliver / Aina M. Tur / Miquel A. Cabot
-;; Assignatura: 21721 – Llenguatges de Programació
+;; Estudiant: Antonio Garcia Font.
+;; Professor: Miquel Cabot.
+;; Assignatura: 21721 – Llenguatges de Programació.
 ;; Convocatòria: primera convocatòria.
 ;; Fitxer de l'agent intel·ligent AGF019_2 (agent tonto).
 ;;

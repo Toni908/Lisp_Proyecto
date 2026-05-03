@@ -2,6 +2,7 @@
 ;; LISP - Paintball.
 ;; Estudiants: Antonio Garcia Font.
 ;; Professor: Miquel Cabot.
+;; Assignatura: 21721 – Llenguatges de Programació.
 ;; Lliurament: primera convocatòria.
 ;; Fitxer del mòdul gràfic.
 
@@ -42,7 +43,7 @@
     (print "Flecha abaix: Apagar Joc")
     
     ; Mapa
-    (imprimir-files (cdr mapa) 0 6) ;; mapa fila mida, la mida es important, per a mapas grosos deuria ser 6 tot sol pot ser par el numero
+    (imprimir-files (cdr mapa) 0 10) ;; mapa fila mida, la mida es important, per a mapas grosos deuria ser 6 tot sol pot ser par el numero
     (color 0 0 0)
 )
 

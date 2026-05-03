@@ -13,6 +13,7 @@
 ;; - BOLLA: Es mou en una direcció aleatoria fins que troba un objectiu, pinta el sol sempre que pot al moure-se. 
 ;;   Si detecta un laboratori sense capturar o enemic, o una bolla/base enemiga
 ;;   sense el seu color, s'hi dirigeix per pintar-la.
+;; - No tenen visio compartida.
 ;;
 ;; == Estructura de dades rebuda (dades) ==
 ;;   1. ronda        - nombre de torn (enter)
@@ -417,53 +418,71 @@
     )
 )
 
-;; agent-agf019-totes-direccions: retorna les 8 direccions starting from a random offset
+;; agent-agf019-totes-direccions: retorna les 8 direccions possibles partint d'un offset aleatori
+;; retorna llista de les 8 direccions (dx dy) rotada aleatòriament
 (defun agent-agf019-totes-direccions ()
-    (let* ((offset (random 8 rs)))
+    (let* ((offset (random 8 rs)))                  ;; offset aleatori entre 0 i 7
         (agent-agf019-rotar-llista offset
             (list
-                (list  1  0) (list  1  1) (list  0  1) (list -1  1)
-                (list -1  0) (list -1 -1) (list  0 -1) (list  1 -1)
+                (list  1  0) (list  1  1) (list  0  1) (list -1  1)  ;; E, SE, S, SO
+                (list -1  0) (list -1 -1) (list  0 -1) (list  1 -1)  ;; O, NO, N, NE
             )
         )
     )
 )
 
 ;; agent-agf019-rotar-llista: rota una llista n posicions cap a l'esquerra
+;; Paràmetres:
+;;   n - nombre de posicions a rotar
+;;   l - llista a rotar
 (defun agent-agf019-rotar-llista (n l)
-    (cond ((= n 0) l)
+    (cond ((= n 0) l)                                       ;; cas base: rotació completada
           (t (agent-agf019-rotar-llista
                 (- n 1)
-                (append (cdr l) (list (car l)))
+                (append (cdr l) (list (car l)))             ;; mou el primer element al final
               )
           )
     )
 )
 
-;; agent-agf019-accions-moviment-normal: prova les 8 direccions sistemàticament
-;; començant per una aleatòria
+;; agent-agf019-accions-moviment-normal: intenta moure l'agent provant les 8 direccions
+;;   començant per una aleatòria
+;; Paràmetres:
+;;   coord       - coordenada actual (x y) de l'agent
+;;   color-propi - color de l'equip de l'agent
+;;   tr-pintar   - temps de recàrrega de pintar
+;;   tr-moure    - temps de recàrrega de moure
+;;   id          - identificador de l'agent
+;;   ronda       - ronda actual
+;;   visio       - llista de caselles visibles
 (defun agent-agf019-accions-moviment-normal (coord color-propi tr-pintar tr-moure id ronda visio)
-    (let* ((pot-moure  (< tr-moure 1.0))
-           (pot-pintar (< tr-pintar 1))
-           (dirs       (agent-agf019-totes-direccions)))
+    (let* ((pot-moure  (< tr-moure 1.0))                    ;; comprova si pot moure's
+           (pot-pintar (< tr-pintar 1))                     ;; comprova si pot pintar
+           (dirs       (agent-agf019-totes-direccions)))     ;; genera les 8 direccions aleatòries
         (cond
-            ((not pot-moure) nil)
+            ((not pot-moure) nil)                           ;; si no pot moure's, no fa res
             (t (agent-agf019-prova-direccions coord dirs color-propi pot-pintar visio))
         )
     )
 )
 
-;; agent-agf019-prova-direccions: itera les direccions fins trobar una casella vàlida
+;; agent-agf019-prova-direccions: itera recursivament les direccions fins trobar una casella vàlida
+;; Paràmetres:
+;;   coord       - coordenada actual (x y) de l'agent
+;;   dirs        - llista de direccions pendents de provar
+;;   color-propi - color de l'equip de l'agent
+;;   pot-pintar  - booleà que indica si l'agent pot pintar
+;;   visio       - llista de caselles visibles
 (defun agent-agf019-prova-direccions (coord dirs color-propi pot-pintar visio)
     (cond
-        ((null dirs) nil)
+        ((null dirs) nil)                                   ;; cap direcció vàlida trobada
         (t
-            (let* ((dest     (agent-agf019-aplica-direccio coord (car dirs)))
-                   (cas-dest (agent-agf019-buscar-casella dest visio))
+            (let* ((dest     (agent-agf019-aplica-direccio coord (car dirs)))    ;; casella destí
+                   (cas-dest (agent-agf019-buscar-casella dest visio))           ;; cerca destí a la visió
                    (resultat (agent-agf019-generar-moviment coord dest cas-dest color-propi pot-pintar)))
                 (cond
-                    ((not (null resultat)) resultat)
-                    (t (agent-agf019-prova-direccions coord (cdr dirs) color-propi pot-pintar visio))
+                    ((not (null resultat)) resultat)        ;; direcció vàlida, retorna l'acció
+                    (t (agent-agf019-prova-direccions coord (cdr dirs) color-propi pot-pintar visio)) ;; prova la següent
                 )
             )
         )
