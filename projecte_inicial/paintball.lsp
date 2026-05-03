@@ -30,15 +30,18 @@
 ;; de normal esta a 10 ya que aixi es veu molt millor, pero si vols usar mapes grosos es deura
 ;; usar amb 6, per a que i hagui espai.
 ;;
-;; == Mapas Jugables ==
+;; == Mapaes Jugables ==
 ;; Tots els mapes son jugables, pero amb les seguents condicions:
 ;; -  Necesari mida 2 per a huge100 y huge90 per a poder veurelo enter. Rendiment Pessim.
-;; -  Necesari mida 4 per a huge80 y huge70 per a poder veurelo enter. Rendiment Dolent
+;; -  Necesari mida 4 per a huge80 y huge70 per a poder veurelo enter. Rendiment Dolent.
 ;; -  Els mapes grosos que no superin aquesta cuantitat de cuadrats, es poden veure amb
 ;;    mida 6, el rendiment decreix amb la grandaria del mapa y el nombre de bolles.
 ;; -  Per a mapas normals, (l'unics que es poden guanyar per que la ia no es molt 
 ;;    inteligent) recommand mina 10, per a que se vegi be tot.
 ;; A partir de mida 4, no es veu be les marques a bases y bolles.
+;;
+;; == IA ==
+;; Si es vol cambiar la ia, es troba en el load y en la linea 223 224 y 370 y 371.
 
 ;; Necessari per a l'optimització de crides recursives.
 (load 'common) ; https://almy.us/files/xl305req.zip
@@ -140,7 +143,10 @@
         ((fi-partida-mapa mapa) (monitor mapa))
         (t
             (pinta mapa)
-            (autoavanza (fer-torn mapa)))))
+            (autoavanza (fer-torn mapa))
+        )
+    )
+)
 
 ;; fer-n-torns: funcion auxiliar para hacer x turnos
 ;; Paràmetres: 
@@ -151,7 +157,10 @@
         ((= n 0) mapa)
         (t 
             (pinta mapa)
-            (fer-n-torns (fer-torn mapa) (- n 1)))))
+            (fer-n-torns (fer-torn mapa) (- n 1))
+        )
+    )
+)
 
 ;; fer-torn: calcula el nou estat del mapa per al torn actual.
 ;; Incrementa el torn, afegeix pintura a l'equip actiu (2 base + 1 per cada lab capturat),
@@ -321,7 +330,8 @@
            (celdas (celdas-mapa (cdr mapa)))
            (celda-dst (buscar-celda coord-dst celdas))
            (equip (cadr unitat))
-           (pintura (caddr unitat)))
+           (pintura (caddr unitat))
+          )
         (cond
             ((null celda-dst) mapa)
             ((not (equal (car (cddddr unitat)) 'base)) mapa)
@@ -360,7 +370,11 @@
                     ((equal equip 'e1) (agent-agf019 unitat-nova))                      ; equipo 1
                     (t (agent-agf019_2 unitat-nova))))                                  ; equipo 2 (tonto) 
                 (mapa-final (aplicar-accions-unitat mapa-v2 accions unitat-nova)))
-                mapa-final))))) 
+                mapa-final)
+            )
+        )
+    )
+) 
 
 ; aplicar-pinta: pinta una casella del mapa amb el color de la bolla
 ; Paràmetres:
@@ -640,7 +654,8 @@
                         (t celda)
                     )
                 )
-                acc))
+                acc)
+            )
         )
     )
 )
@@ -846,7 +861,8 @@
                   (t (celda-tr-pintar-bolla celda)))                ;              pos 8 si bolla
             (cond (base nil)                                        ; 10. tr-moure - nil si base
                   (t (celda-tr-moure-bolla celda)))                 ;              pos 9 si bolla
-            (calcular-visio (celda-coord celda) tipus mapa))        ; 11. visio 
+            (calcular-visio (celda-coord celda) tipus mapa)         ; 11. visio 
+        )        
     )
 ) 
 
